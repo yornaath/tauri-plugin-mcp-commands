@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MCP Demo</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>MCP Demo</h1>
+      <p class="muted">A notes app whose commands are also MCP tools.</p>
+    </header>
+
+    <section id="banner" class="banner" hidden></section>
+
+    <section class="card">
+      <div class="row">
+        <h2>MCP server</h2>
+        <button id="toggle" type="button">Start</button>
+      </div>
+      <p id="status" class="muted">Stopped.</p>
+      <p class="muted small">Tools: <span id="tools">–</span></p>
+    </section>
+
+    <section class="card" id="connect" hidden>
+      <div class="row">
+        <h2>Connect an agent</h2>
+        <button id="rotate" type="button" class="secondary">Rotate token</button>
+      </div>
+      <nav class="tabs" id="tabs"></nav>
+      <pre id="config"></pre>
+      <button id="copy" type="button" class="secondary">Copy</button>
+    </section>
+
+    <section class="card" id="access" hidden>
+      <h2>Access requests</h2>
+      <ul id="requests" class="list"></ul>
+    </section>
+
+    <section class="card">
+      <h2>Connected clients</h2>
+      <ul id="clients" class="list"><li class="muted">None yet.</li></ul>
+    </section>
+
+    <section class="card">
+      <h2>Notes</h2>
+      <form id="new-note" class="row">
+        <input id="title" placeholder="New note title" required />
+        <button type="submit">Add</button>
+      </form>
+      <ul id="notes" class="list"></ul>
+    </section>
+  </body>
+</html>
