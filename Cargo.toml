@@ -3,6 +3,7 @@ resolver = "3"
 members = [
     "crates/tauri-plugin-mcp-server",
     "crates/tauri-plugin-mcp-server-macros",
+    "examples/demo-app",
 ]
 
 [workspace.package]
