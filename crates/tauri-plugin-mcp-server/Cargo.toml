@@ -1,0 +1,39 @@
+[package]
+name = "tauri-plugin-mcp-server"
+description = "Expose selected Tauri commands as an MCP server, safe to ship in release builds"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+links = "tauri-plugin-mcp-server"
+
+[features]
+default = ["specta"]
+specta = ["dep:specta", "dep:specta-serde", "dep:specta-jsonschema", "tauri/specta"]
+
+[dependencies]
+tauri-plugin-mcp-server-macros = { path = "../tauri-plugin-mcp-server-macros", version = "0.1.0" }
+tauri = { workspace = true }
+rmcp = { workspace = true, features = [
+    "server",
+    "transport-streamable-http-server",
+    "transport-streamable-http-server-session",
+] }
+axum = { workspace = true, features = ["http1", "tokio"] }
+tokio = { workspace = true, features = ["sync", "rt", "net", "time", "macros"] }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+specta = { workspace = true, optional = true }
+specta-serde = { workspace = true, optional = true }
+specta-jsonschema = { workspace = true, optional = true }
+
+[build-dependencies]
+tauri-plugin = { workspace = true, features = ["build"] }
+
+[dev-dependencies]
+tauri = { workspace = true, features = ["test"] }
+tokio = { workspace = true, features = ["full"] }
+insta.workspace = true
+reqwest.workspace = true
+trybuild.workspace = true

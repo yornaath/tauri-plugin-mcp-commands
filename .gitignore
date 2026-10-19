@@ -1,0 +1,6 @@
+/target
+**/target
+Cargo.lock.bak
+node_modules/
+dist/
+*.mcpb

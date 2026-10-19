@@ -1,0 +1,42 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/tauri-plugin-mcp-server",
+    "crates/tauri-plugin-mcp-server-macros",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+# Stable crates: caret requirements at the newest release.
+tauri = { version = "2.12.4", default-features = false }
+tauri-build = "2"
+tauri-plugin = "2"
+rmcp = { version = "3.5.1", default-features = false }
+axum = { version = "0.8.9", default-features = false }
+tokio = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+schemars = "1.2"
+heck = "0.5"
+thiserror = "2"
+
+# The specta family is still in RC: pin exactly.
+specta = { version = "=2.0.0-rc.25", features = ["derive", "function"] }
+specta-serde = "=0.0.12"
+specta-jsonschema = "=0.0.3"
+tauri-specta = "=2.0.0-rc.25"
+
+# Macro crate.
+syn = { version = "2", features = ["full", "extra-traits"] }
+quote = "1"
+proc-macro2 = "1"
+
+# Dev.
+trybuild = "1"
+insta = { version = "1", features = ["json"] }
+reqwest = { version = "0.13", default-features = false, features = ["json"] }
