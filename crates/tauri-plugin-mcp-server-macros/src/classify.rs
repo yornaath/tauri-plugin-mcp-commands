@@ -79,6 +79,19 @@ pub fn runtime_param(generics: &Generics, arg_types: &[&Type]) -> RuntimeParam {
     }
 }
 
+/// Whether `ty` mentions `impl Trait`, which can't be named elsewhere.
+pub fn has_impl_trait(ty: &Type) -> bool {
+    struct Find(bool);
+    impl<'ast> Visit<'ast> for Find {
+        fn visit_type_impl_trait(&mut self, _: &'ast syn::TypeImplTrait) {
+            self.0 = true;
+        }
+    }
+    let mut f = Find(false);
+    f.visit_type(ty);
+    f.0
+}
+
 /// Replaces every named lifetime with `'_`, so a parameter type like
 /// `State<'r, Repo>` can be named outside the command's signature.
 pub fn erase_lifetimes(ty: &Type) -> Type {

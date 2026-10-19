@@ -84,6 +84,42 @@ macro_rules! window_bound {
 }
 window_bound!(Window, Webview, WebviewWindow);
 
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` can't be a parameter of an `#[mcp_tool]` command",
+    label = "IPC-only parameter",
+    note = "`Channel`, `Request`, `CommandScope` and `GlobalScope` come from a webview IPC call, which an MCP tool call doesn't have",
+    note = "split the logic into a function both the command and a separate `#[mcp_tool]` fn can call"
+)]
+pub trait McpToolArgNotIpcBound {}
+
+/// Same priority as window types: Tauri parameters that only exist for IPC calls.
+pub trait ExtractIpcBound {
+    type Out;
+    fn __mcp_extract<R: Runtime>(self, cx: &Cx<'_, R>, name: &'static str) -> Result<Self::Out, ToolError>
+    where
+        Self::Out: McpToolArgNotIpcBound;
+}
+
+macro_rules! ipc_bound {
+    ($([$($g:tt)*] $ty:ty),*) => {$(
+        impl<$($g)*> ExtractIpcBound for &&&Arg<$ty> {
+            type Out = $ty;
+            fn __mcp_extract<R: Runtime>(self, _: &Cx<'_, R>, _: &'static str) -> Result<Self::Out, ToolError>
+            where
+                Self::Out: McpToolArgNotIpcBound,
+            {
+                unreachable!()
+            }
+        }
+    )*};
+}
+ipc_bound!(
+    [T] tauri::ipc::Channel<T>,
+    ['a] tauri::ipc::Request<'a>,
+    [T: tauri::ipc::ScopeObject] tauri::ipc::CommandScope<T>,
+    [T: tauri::ipc::ScopeObject] tauri::ipc::GlobalScope<T>
+);
+
 pub trait ExtractState {
     type Target: Send + Sync + 'static;
     fn __mcp_extract<'a, R: Runtime>(
@@ -210,5 +246,81 @@ impl ResultTag {
 impl ValueTag {
     pub fn into_value<T: Serialize>(self, ret: T) -> Result<Value, ToolError> {
         serde_json::to_value(ret).map_err(|e| ToolError::Internal(format!("failed to serialize result: {e}")))
+    }
+}
+
+/// Schema glue for the `schemars` fallback, same autoref scheme: injected
+/// parameters have no schema, `Option<T>` parameters are optional.
+#[cfg(feature = "schemars")]
+pub mod schemars_glue {
+    use std::marker::PhantomData;
+
+    use schemars::{JsonSchema, Schema, SchemaGenerator};
+    use tauri::{AppHandle, Runtime, State};
+
+    pub use super::Arg;
+
+    pub trait SchemarsOption {
+        fn __mcp_schemars(self, g: &mut SchemaGenerator) -> Option<(Schema, bool)>;
+    }
+    impl<T: JsonSchema> SchemarsOption for &&&Arg<Option<T>> {
+        fn __mcp_schemars(self, g: &mut SchemaGenerator) -> Option<(Schema, bool)> {
+            Some((g.subschema_for::<Option<T>>(), true))
+        }
+    }
+    pub trait SchemarsState {
+        fn __mcp_schemars(self, g: &mut SchemaGenerator) -> Option<(Schema, bool)>;
+    }
+    impl<T: Send + Sync + 'static> SchemarsState for &&Arg<State<'_, T>> {
+        fn __mcp_schemars(self, _: &mut SchemaGenerator) -> Option<(Schema, bool)> {
+            None
+        }
+    }
+    pub trait SchemarsAppHandle {
+        fn __mcp_schemars(self, g: &mut SchemaGenerator) -> Option<(Schema, bool)>;
+    }
+    impl<R: Runtime> SchemarsAppHandle for &Arg<AppHandle<R>> {
+        fn __mcp_schemars(self, _: &mut SchemaGenerator) -> Option<(Schema, bool)> {
+            None
+        }
+    }
+    pub trait SchemarsValue {
+        fn __mcp_schemars(self, g: &mut SchemaGenerator) -> Option<(Schema, bool)>;
+    }
+    impl<T: JsonSchema> SchemarsValue for Arg<T> {
+        fn __mcp_schemars(self, g: &mut SchemaGenerator) -> Option<(Schema, bool)> {
+            Some((g.subschema_for::<T>(), false))
+        }
+    }
+
+    /// Return-type tag: `Result<T, E>` reports `T`.
+    pub struct Ret<T>(PhantomData<fn() -> T>);
+    impl<T> Clone for Ret<T> {
+        fn clone(&self) -> Self {
+            *self
+        }
+    }
+    impl<T> Copy for Ret<T> {}
+    impl<T> Ret<T> {
+        #[allow(clippy::new_without_default)]
+        pub const fn new() -> Self {
+            Self(PhantomData)
+        }
+    }
+    pub trait SchemarsResult {
+        fn __mcp_schemars_out(self, g: &mut SchemaGenerator) -> Option<Schema>;
+    }
+    impl<T: JsonSchema, E> SchemarsResult for &Ret<Result<T, E>> {
+        fn __mcp_schemars_out(self, g: &mut SchemaGenerator) -> Option<Schema> {
+            Some(g.subschema_for::<T>())
+        }
+    }
+    pub trait SchemarsOutput {
+        fn __mcp_schemars_out(self, g: &mut SchemaGenerator) -> Option<Schema>;
+    }
+    impl<T: JsonSchema> SchemarsOutput for Ret<T> {
+        fn __mcp_schemars_out(self, g: &mut SchemaGenerator) -> Option<Schema> {
+            Some(g.subschema_for::<T>())
+        }
     }
 }

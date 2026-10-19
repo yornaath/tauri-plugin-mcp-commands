@@ -6,15 +6,19 @@ use std::{collections::HashMap, sync::Arc};
 use rmcp::{
     ErrorData, RoleServer, ServerHandler,
     model::{
-        CallToolRequestParams, CallToolResponse, CallToolResult, ContentBlock, Implementation, ListToolsResult,
-        PaginatedRequestParams, ServerCapabilities, ServerConfig, Tool, ToolAnnotations as McpAnnotations,
+        CallToolRequestParams, CallToolResponse, CallToolResult, ContentBlock, ErrorCode, Extensions, Implementation,
+        InitializeRequestParams, InitializeResult, ListToolsResult, PaginatedRequestParams, RequestMetaObject,
+        ServerCapabilities, ServerConfig, Tool, ToolAnnotations as McpAnnotations,
     },
     service::RequestContext,
 };
 use serde_json::{Value, json};
 use tauri::{AppHandle, Runtime};
 
-use crate::{ToolArgs, ToolDef, ToolError};
+use crate::{
+    ToolArgs, ToolDef, ToolError,
+    clients::{ClientIdent, Clients},
+};
 
 /// Server name and version reported to clients.
 #[derive(Debug, Clone)]
@@ -34,11 +38,19 @@ impl<R: Runtime> Registry<R> {
     pub(crate) fn new(tools: Vec<ToolDef<R>>) -> Result<Self, String> {
         let mut by_name = HashMap::new();
         for (i, tool) in tools.iter().enumerate() {
+            let n = tool.name();
+            if n.is_empty() || n.len() > 128 || !n.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | '.')) {
+                return Err(format!("invalid MCP tool name `{n}`: use 1-128 characters from [A-Za-z0-9_.-]"));
+            }
             if by_name.insert(tool.name().to_owned(), i).is_some() {
                 return Err(format!("duplicate MCP tool name `{}`", tool.name()));
             }
         }
         Ok(Self { tools, by_name })
+    }
+
+    pub(crate) fn names(&self) -> impl Iterator<Item = &str> {
+        self.tools.iter().map(ToolDef::name)
     }
 
     fn get(&self, name: &str) -> Option<&ToolDef<R>> {
@@ -50,11 +62,42 @@ pub(crate) struct McpHandler<R: Runtime> {
     pub(crate) app: AppHandle<R>,
     pub(crate) registry: Arc<Registry<R>>,
     pub(crate) info: Arc<ServerInfo>,
+    pub(crate) clients: Arc<Clients>,
 }
 
 impl<R: Runtime> Clone for McpHandler<R> {
     fn clone(&self) -> Self {
-        Self { app: self.app.clone(), registry: self.registry.clone(), info: self.info.clone() }
+        Self {
+            app: self.app.clone(),
+            registry: self.registry.clone(),
+            info: self.info.clone(),
+            clients: self.clients.clone(),
+        }
+    }
+}
+
+impl<R: Runtime> McpHandler<R> {
+    /// Who sent this request: `clientInfo` from the 2026-07-28 `_meta` or
+    /// the `initialize` params, plus the HTTP User-Agent.
+    async fn admit(
+        &self,
+        meta: &RequestMetaObject,
+        extensions: &Extensions,
+        init: Option<&Implementation>,
+    ) -> Result<(), ErrorData> {
+        let info = init.cloned().or_else(|| meta.client_info());
+        let user_agent = extensions
+            .get::<http::request::Parts>()
+            .and_then(|p| p.headers.get(http::header::USER_AGENT))
+            .and_then(|v| v.to_str().ok())
+            .map(str::to_owned);
+        let ident = ClientIdent {
+            name: info.as_ref().map(|i| i.name.clone()),
+            version: info.as_ref().map(|i| i.version.clone()),
+            user_agent,
+        };
+        // -32001: a server-defined error, so clients show the message.
+        self.clients.admit(&self.app, ident).await.map_err(|m| ErrorData::new(ErrorCode(-32001), m, None))
     }
 }
 
@@ -102,11 +145,22 @@ impl<R: Runtime> ServerHandler for McpHandler<R> {
             .with_server_info(Implementation::new(self.info.name.clone(), self.info.version.clone()))
     }
 
+    async fn initialize(
+        &self,
+        request: InitializeRequestParams,
+        context: RequestContext<RoleServer>,
+    ) -> Result<InitializeResult, ErrorData> {
+        self.admit(&context.meta, &context.extensions, Some(&request.client_info)).await?;
+        context.peer.set_peer_info(request.clone());
+        self.negotiate_initialize(&request)
+    }
+
     async fn list_tools(
         &self,
         _request: Option<PaginatedRequestParams>,
-        _context: RequestContext<RoleServer>,
+        context: RequestContext<RoleServer>,
     ) -> Result<ListToolsResult, ErrorData> {
+        self.admit(&context.meta, &context.extensions, None).await?;
         let tools = self
             .registry
             .tools
@@ -123,8 +177,9 @@ impl<R: Runtime> ServerHandler for McpHandler<R> {
     async fn call_tool(
         &self,
         request: CallToolRequestParams,
-        _context: RequestContext<RoleServer>,
+        context: RequestContext<RoleServer>,
     ) -> Result<CallToolResponse, ErrorData> {
+        self.admit(&context.meta, &context.extensions, None).await?;
         let Some(tool) = self.registry.get(&request.name) else {
             return Err(ErrorData::invalid_params(format!("unknown tool `{}`", request.name), None));
         };

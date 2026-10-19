@@ -1,9 +1,11 @@
 //! Serves a few tools from tauri's mock runtime, for poking at with an MCP
 //! client: `cargo run -p tauri-plugin-mcp-server --example mock_server [port]`.
+//! Prints the URL and bearer token.
 
 use serde::{Deserialize, Serialize};
 use specta::Type;
-use tauri_plugin_mcp_server::{ServerInfo, __private::serve, collect_mcp_tools, mcp_tool};
+use tauri::Manager;
+use tauri_plugin_mcp_server::{Builder, McpServer, collect_mcp_tools, mcp_tool};
 
 #[derive(Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
@@ -33,9 +35,22 @@ async fn explode(reason: String) -> Result<(), String> {
 #[tokio::main]
 async fn main() {
     let port = std::env::args().nth(1).and_then(|p| p.parse().ok()).unwrap_or(0);
-    let app = tauri::test::mock_app();
-    let info = ServerInfo { name: "mock-app".into(), version: "0.1.0".into() };
-    let (addr, _cancel) = serve(app.handle().clone(), collect_mcp_tools![shout, explode], info, port).await.unwrap();
-    println!("listening on http://{addr}/mcp");
+    let dir = std::env::temp_dir().join("mcp-mock-server");
+    let app = tauri::test::mock_builder()
+        .plugin(
+            Builder::new()
+                .server_info("mock-app", "0.1.0")
+                .tools(collect_mcp_tools![shout, explode])
+                .preferred_port(port)
+                .data_dir(dir)
+                .build(),
+        )
+        .build(tauri::test::mock_context(tauri::test::noop_assets()))
+        .unwrap();
+    let server = app.state::<McpServer<tauri::test::MockRuntime>>();
+    server.start().await.unwrap();
+    let c = server.connection_configs().unwrap();
+    println!("url:   {}\ntoken: {}\n\n{}", c.url, c.token, c.claude_code);
     tokio::signal::ctrl_c().await.unwrap();
+    server.stop().await;
 }

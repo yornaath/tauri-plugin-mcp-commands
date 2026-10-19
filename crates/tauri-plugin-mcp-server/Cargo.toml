@@ -10,6 +10,8 @@ links = "tauri-plugin-mcp-server"
 [features]
 default = ["specta"]
 specta = ["dep:specta", "dep:specta-serde", "tauri/specta"]
+# Schema fallback for commands without specta: inputs and results implement `schemars::JsonSchema`.
+schemars = ["dep:schemars"]
 
 [dependencies]
 tauri-plugin-mcp-server-macros = { path = "../tauri-plugin-mcp-server-macros", version = "0.1.0" }
@@ -26,8 +28,20 @@ log.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
+getrandom.workspace = true
+base64.workspace = true
+http.workspace = true
 specta = { workspace = true, optional = true }
 specta-serde = { workspace = true, optional = true }
+schemars = { workspace = true, optional = true }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { workspace = true, features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Security_Authorization",
+    "Win32_System_Threading",
+] }
 
 [build-dependencies]
 tauri-plugin = { workspace = true, features = ["build"] }
@@ -39,3 +53,4 @@ insta.workspace = true
 reqwest.workspace = true
 trybuild.workspace = true
 jsonschema.workspace = true
+schemars = { workspace = true, features = ["derive"] }

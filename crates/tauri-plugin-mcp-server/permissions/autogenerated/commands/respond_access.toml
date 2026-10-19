@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-respond-access"
+description = "Enables the respond_access command without any pre-configured scope."
+commands.allow = ["respond_access"]
+
+[[permission]]
+identifier = "deny-respond-access"
+description = "Denies the respond_access command without any pre-configured scope."
+commands.deny = ["respond_access"]

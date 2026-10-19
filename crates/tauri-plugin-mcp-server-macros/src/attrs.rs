@@ -30,6 +30,8 @@ pub struct McpToolArgs {
     pub open_world: Option<bool>,
     pub blocking: bool,
     pub rename_all: Option<ArgCase>,
+    /// Use specta schemas even without a visible `#[specta::specta]`.
+    pub specta: bool,
 }
 
 impl McpToolArgs {
@@ -55,12 +57,14 @@ impl McpToolArgs {
             self.open_world = Some(flag(&meta)?);
         } else if meta.path.is_ident("blocking") {
             self.blocking = flag(&meta)?;
+        } else if meta.path.is_ident("specta") {
+            self.specta = flag(&meta)?;
         } else if meta.path.is_ident("rename_all") {
             self.rename_all = Some(ArgCase::parse(&meta.value()?.parse()?)?);
         } else {
             return Err(meta.error(
                 "unknown `mcp_tool` argument; expected one of `name`, `title`, `read_only`, \
-                 `destructive`, `idempotent`, `open_world`, `blocking`, `rename_all`",
+                 `destructive`, `idempotent`, `open_world`, `blocking`, `rename_all`, `specta`",
             ));
         }
         Ok(())

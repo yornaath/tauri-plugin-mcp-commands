@@ -23,8 +23,9 @@ mod expand;
 ///
 /// Arguments: `name = "…"`, `title = "…"`, `read_only`, `destructive`,
 /// `idempotent`, `open_world` (each optionally `= bool`), `blocking` (run a
-/// sync command on the blocking pool instead of the main thread), and
-/// `rename_all = "camelCase" | "snake_case"`.
+/// sync command on the blocking pool instead of the main thread),
+/// `rename_all = "camelCase" | "snake_case"`, and `specta` (use specta schemas
+/// even when `#[specta::specta]` isn't below this attribute).
 #[proc_macro_attribute]
 pub fn mcp_tool(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut args = attrs::McpToolArgs::default();

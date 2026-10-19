@@ -1,0 +1,11 @@
+"$schema" = "schemas/schema.json"
+
+[default]
+description = """
+Lets the webview start, stop and inspect the MCP server.
+
+Reading connection configs (which contain the bearer token), rotating the
+token and answering access requests are separate permissions:
+`allow-connection-configs`, `allow-rotate-token`, `allow-respond-access`.
+"""
+permissions = ["allow-start", "allow-stop", "allow-status"]

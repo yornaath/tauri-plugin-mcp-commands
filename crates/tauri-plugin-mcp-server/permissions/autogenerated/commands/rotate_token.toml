@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-rotate-token"
+description = "Enables the rotate_token command without any pre-configured scope."
+commands.allow = ["rotate_token"]
+
+[[permission]]
+identifier = "deny-rotate-token"
+description = "Denies the rotate_token command without any pre-configured scope."
+commands.deny = ["rotate_token"]

@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-connection-configs"
+description = "Enables the connection_configs command without any pre-configured scope."
+commands.allow = ["connection_configs"]
+
+[[permission]]
+identifier = "deny-connection-configs"
+description = "Denies the connection_configs command without any pre-configured scope."
+commands.deny = ["connection_configs"]

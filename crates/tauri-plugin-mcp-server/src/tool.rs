@@ -67,8 +67,30 @@ pub struct ToolSchemas {
 pub enum SchemaSource {
     /// No type information: every input is accepted as any JSON value.
     Untyped,
+    /// Given by hand, for manual tools.
+    Static(ToolSchemas),
     #[cfg(feature = "specta")]
-    Specta(fn(&mut specta::Types) -> specta::datatype::Function),
+    Specta(fn(&mut specta::Types) -> SpectaSig),
+    #[cfg(feature = "schemars")]
+    Schemars(fn(&mut schemars::SchemaGenerator) -> SchemarsSig),
+}
+
+/// Parameter and result types of a command, from specta. `None` entries are
+/// injected parameters (`State`, `AppHandle`).
+#[cfg(feature = "specta")]
+#[doc(hidden)]
+pub struct SpectaSig {
+    pub inputs: Vec<Option<specta::datatype::DataType>>,
+    pub result: Option<specta::datatype::DataType>,
+}
+
+/// Parameter and result schemas of a command, from schemars. Inputs are
+/// `(schema, optional)`; `None` entries are injected parameters.
+#[cfg(feature = "schemars")]
+#[doc(hidden)]
+pub struct SchemarsSig {
+    pub inputs: Vec<Option<(schemars::Schema, bool)>>,
+    pub result: Option<schemars::Schema>,
 }
 
 /// One tool the MCP server exposes.
@@ -106,12 +128,15 @@ impl<R: Runtime> ToolDef<R> {
         self.schemas
             .get_or_init(|| match &self.schema_source {
                 SchemaSource::Untyped => Ok(untyped_schemas(&self.inputs)),
+                SchemaSource::Static(s) => Ok(s.clone()),
                 #[cfg(feature = "specta")]
                 SchemaSource::Specta(f) => {
                     let mut types = specta::Types::default();
-                    let func = f(&mut types);
-                    crate::schema::from_function(&func, &types, &self.inputs)
+                    let sig = f(&mut types);
+                    crate::schema::from_specta(&self.name, sig, &types, &self.inputs)
                 }
+                #[cfg(feature = "schemars")]
+                SchemaSource::Schemars(f) => crate::schemars_schema::build(f, &self.name, &self.inputs),
             })
             .as_ref()
             .map_err(String::as_str)
@@ -120,6 +145,78 @@ impl<R: Runtime> ToolDef<R> {
     /// Runs the tool.
     pub fn call(&self, app: AppHandle<R>, args: ToolArgs) -> ToolFuture {
         (self.handler)(app, args)
+    }
+}
+
+/// Tools that aren't 1:1 with a command.
+impl<R: Runtime> ToolDef<R> {
+    /// A tool backed by a closure. `input_schema` must be a JSON Schema with
+    /// `"type": "object"`; the handler gets the call's arguments object.
+    ///
+    /// ```ignore
+    /// ToolDef::manual("start_timer", json!({
+    ///     "type": "object",
+    ///     "properties": { "minutes": { "type": "integer", "minimum": 1 } },
+    ///     "required": ["minutes"],
+    /// }), |app, args| async move {
+    ///     let minutes = args["minutes"].as_u64().ok_or("minutes must be a number")?;
+    ///     start_timer(&app, minutes).map_err(|e| e.to_string())?;
+    ///     Ok(json!({ "started": true }))
+    /// })
+    /// .with_description("Starts a focus timer.")
+    /// ```
+    pub fn manual<F, Fut>(name: impl Into<Cow<'static, str>>, input_schema: Value, handler: F) -> Self
+    where
+        F: Fn(AppHandle<R>, ToolArgs) -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = Result<Value, String>> + Send + 'static,
+    {
+        let schemas = match input_schema {
+            Value::Object(input) if input.get("type") == Some(&json!("object")) => {
+                Ok(ToolSchemas { input, output: None, wrap_output: false })
+            }
+            _ => Err("manual tool input schema must be an object schema with \"type\": \"object\"".to_owned()),
+        };
+        let handler = move |app, args| -> ToolFuture {
+            let fut = handler(app, args);
+            Box::pin(async move { fut.await.map_err(|e| ToolError::Command(Value::String(e))) })
+        };
+        Self {
+            name: name.into(),
+            description: None,
+            annotations: ToolAnnotations::default(),
+            inputs: Vec::new(),
+            schema_source: SchemaSource::Untyped,
+            schemas: OnceLock::from(schemas),
+            handler: Arc::new(handler),
+        }
+    }
+
+    pub fn with_description(mut self, description: impl Into<Cow<'static, str>>) -> Self {
+        self.description = Some(description.into());
+        self
+    }
+
+    pub fn with_annotations(mut self, annotations: ToolAnnotations) -> Self {
+        self.annotations = annotations;
+        self
+    }
+
+    /// Sets the output schema. A non-object schema is wrapped as
+    /// `{ "result": … }`, and so is the structured content.
+    pub fn with_output_schema(mut self, schema: Value) -> Self {
+        if let Some(Ok(s)) = self.schemas.get_mut() {
+            let wrap = schema.get("type") != Some(&json!("object"));
+            let schema = if wrap {
+                json!({ "type": "object", "properties": { "result": schema }, "required": ["result"] })
+            } else {
+                schema
+            };
+            if let Value::Object(o) = schema {
+                s.output = Some(o);
+                s.wrap_output = wrap;
+            }
+        }
+        self
     }
 }
 

@@ -1,5 +1,8 @@
 //! Calls `#[mcp_tool]` handlers directly against tauri's mock runtime.
 
+// These commands are deliberately untyped; with `schemars` on they would need `JsonSchema`.
+#![cfg(not(feature = "schemars"))]
+
 use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};

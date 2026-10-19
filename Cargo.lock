@@ -3760,11 +3760,15 @@ name = "tauri-plugin-mcp-server"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "base64 0.23.1",
+ "getrandom 0.4.3",
+ "http",
  "insta",
  "jsonschema",
  "log",
  "reqwest",
  "rmcp",
+ "schemars 1.2.3",
  "serde",
  "serde_json",
  "specta",
@@ -3776,6 +3780,7 @@ dependencies = [
  "tokio",
  "tokio-util",
  "trybuild",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

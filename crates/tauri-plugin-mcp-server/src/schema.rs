@@ -13,35 +13,38 @@ use serde_json::{Map, Value, json};
 use specta::{
     Format as _, Types,
     datatype::{
-        DataType, Enum, Fields, Function, Generic, NamedDataType, NamedReference, NamedReferenceType, Primitive,
+        DataType, Enum, Fields, Generic, NamedDataType, NamedReference, NamedReferenceType, Primitive,
         Reference,
     },
 };
 use specta_serde::{Phase, PhasesFormat, select_phase_datatype};
 
-use crate::tool::{JsonObject, ToolSchemas};
+use crate::{
+    schema_util::object_or_wrapped,
+    tool::{JsonObject, SpectaSig, ToolSchemas},
+};
 
 /// Generic nesting limit for recursive generic types, which are inlined.
 const MAX_DEPTH: usize = 64;
 
-pub fn from_function(func: &Function, types: &Types, inputs: &[&str]) -> Result<ToolSchemas, String> {
-    if func.args().len() != inputs.len() {
+pub(crate) fn from_specta(tool: &str, sig: SpectaSig, types: &Types, inputs: &[&str]) -> Result<ToolSchemas, String> {
+    let args: Vec<DataType> = sig.inputs.into_iter().flatten().collect();
+    if args.len() != inputs.len() {
         return Err(format!(
-            "specta reports {} input parameters for `{}` but the macro found {}",
-            func.args().len(),
-            func.name(),
+            "specta reports {} input parameters for `{tool}` but the macro found {}",
+            args.len(),
             inputs.len()
         ));
     }
     let resolved = PhasesFormat
         .map_types(types)
-        .map_err(|e| format!("specta-serde rejected the types of `{}`: {e}", func.name()))?
+        .map_err(|e| format!("specta-serde rejected the types of `{tool}`: {e}"))?
         .into_owned();
 
     let mut cx = Cx::new(&resolved, Phase::Deserialize);
     let mut properties = Map::new();
     let mut required = Vec::new();
-    for ((_, dt), name) in func.args().iter().zip(inputs) {
+    for (dt, name) in args.iter().zip(inputs) {
         let dt = select_phase_datatype(dt, &resolved, Phase::Deserialize);
         if !matches!(dt, DataType::Nullable(_)) {
             required.push(Value::String((*name).to_owned()));
@@ -56,7 +59,7 @@ pub fn from_function(func: &Function, types: &Types, inputs: &[&str]) -> Result<
     }
     cx.attach_defs(&mut input);
 
-    let (output, wrap_output) = match func.result() {
+    let (output, wrap_output) = match &sig.result {
         None => (None, false),
         Some(dt) => {
             let dt = select_phase_datatype(dt, &resolved, Phase::Serialize);
@@ -65,20 +68,7 @@ pub fn from_function(func: &Function, types: &Types, inputs: &[&str]) -> Result<
                 (None, false)
             } else {
                 let mut cx = Cx::new(&resolved, Phase::Serialize);
-                let schema = cx.convert_root(&dt);
-                let (mut obj, wrap) = match schema {
-                    Value::Object(o) if o.get("type") == Some(&json!("object")) => (o, false),
-                    other => {
-                        let Value::Object(o) = json!({
-                            "type": "object",
-                            "properties": { "result": other },
-                            "required": ["result"],
-                        }) else {
-                            unreachable!()
-                        };
-                        (o, true)
-                    }
-                };
+                let (mut obj, wrap) = object_or_wrapped(cx.convert_root(&dt));
                 cx.attach_defs(&mut obj);
                 (Some(obj), wrap)
             }

@@ -158,10 +158,20 @@ pub fn mcp_tool(args: McpToolArgs, item: ItemFn) -> syn::Result<TokenStream> {
         opt_bool(args.open_world),
     );
 
-    let schema = if item.attrs.iter().any(attrs::is_specta) {
-        quote!(#m::__specta_source!(#call_path))
+    // Schemas are built per parameter type inside a closure, which (unlike
+    // specta's `fn_datatype!`) can use the command's generic parameters.
+    let schema_tys: Vec<_> = types.iter().map(|t| classify::erase_lifetimes(t)).collect();
+    let ret_ty = match &sig.output {
+        syn::ReturnType::Type(_, t) if !classify::has_impl_trait(t) => {
+            let t = classify::erase_lifetimes(t);
+            quote!(#t)
+        }
+        _ => quote!(),
+    };
+    let schema = if args.specta || item.attrs.iter().any(attrs::is_specta) {
+        quote!(#m::__specta_source!(inputs: [#(#schema_tys),*], result: [#ret_ty]))
     } else {
-        quote!(#p::SchemaSource::Untyped)
+        quote!(#m::__fallback_source!(inputs: [#(#schema_tys),*], result: [#ret_ty]))
     };
 
     let vis = &item.vis;
@@ -176,7 +186,7 @@ pub fn mcp_tool(args: McpToolArgs, item: ItemFn) -> syn::Result<TokenStream> {
         #vis fn #gen_ident #impl_generics () -> #m::ToolDef<#runtime> #where_clause {
             #[allow(unused_imports)]
             use #p::{
-                ExtractAppHandle as _, ExtractInput as _, ExtractState as _, ExtractWindowBound as _,
+                ExtractAppHandle as _, ExtractInput as _, ExtractIpcBound as _, ExtractState as _, ExtractWindowBound as _,
                 IsInputAppHandle as _, IsInputState as _, IsInputValue as _, IsInputWindowBound as _,
                 ResultKind as _, ValueKind as _,
             };

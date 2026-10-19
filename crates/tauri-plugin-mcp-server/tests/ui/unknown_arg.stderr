@@ -1,4 +1,4 @@
-error: unknown `mcp_tool` argument; expected one of `name`, `title`, `read_only`, `destructive`, `idempotent`, `open_world`, `blocking`, `rename_all`
+error: unknown `mcp_tool` argument; expected one of `name`, `title`, `read_only`, `destructive`, `idempotent`, `open_world`, `blocking`, `rename_all`, `specta`
  --> tests/ui/unknown_arg.rs:3:12
   |
 3 | #[mcp_tool(readonly)]
