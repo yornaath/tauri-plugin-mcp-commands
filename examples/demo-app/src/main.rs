@@ -264,36 +264,50 @@ async fn self_test(app: &AppHandle) -> bool {
 
     // The same commands still work over IPC from the webview.
     if let Some(window) = app.get_webview_window("main") {
-        // App commands, plugin commands (through the ACL), and the UI script.
+        // App commands and plugin commands (through the ACL).
         let _ = window.eval(
             "const i = window.__TAURI__.core.invoke;\
              Promise.all([i('where_sync'), i('notes_list', { tag: 'agent' }), i('plugin:mcp-server|status'),\
                           i('plugin:mcp-server|connection_configs')])\
-               .then(v => i('report', { label: 'ipc', value: [...v, document.getElementById('tools').textContent] }))\
-               .catch(e => i('report', { label: 'error', value: String(e) }))",
+               .then(v => i('report', { label: 'ipc', value: v }))\
+               .catch(e => i('report', { label: 'ipc-error', value: String(e) }))",
         );
-        let deadline = Instant::now() + Duration::from_secs(10);
-        let reported = loop {
-            if let Some(r) = app.state::<WebviewReports>().0.lock().unwrap().first().cloned() {
-                break Some(r);
-            }
-            if Instant::now() > deadline {
-                break None;
-            }
-            tokio::time::sleep(Duration::from_millis(50)).await;
-        };
-        match reported {
-            Some((label, v)) => check(
+        match wait_report(app, "ipc").await {
+            Some((label, v)) if label == "ipc" => check(
                 "webview IPC",
-                label == "ipc"
-                    && v[0]["onMainThread"] == true
+                v[0]["onMainThread"] == true
                     && v[1][0]["title"] == "From MCP"
                     && v[2]["running"] == true
-                    && v[3]["claudeCode"].as_str().is_some_and(|c| c.starts_with("claude mcp add"))
-                    && v[4].as_str().is_some_and(|t| t.contains("notes_list")),
-                format!("{}", json!({ "where": v[0], "status.running": v[2]["running"], "uiTools": v[4], "raw": v })),
+                    && v[3]["claudeCode"].as_str().is_some_and(|c| c.starts_with("claude mcp add")),
+                // Not the raw configs: they contain the bearer token.
+                json!({ "where": v[0], "notes": v[1].as_array().map(Vec::len), "running": v[2]["running"] }).to_string(),
             ),
-            None => check("webview IPC", false, "no report within 10s".into()),
+            Some((_, error)) => check("webview IPC", false, error.to_string()),
+            None => check("webview IPC", false, "no report within 20s".into()),
+        }
+
+        // The UI script ran and rendered. It may still be loading (WebKit can
+        // run `eval` on the parsed page before deferred module scripts), so
+        // wait for its ready flag rather than reading the DOM once.
+        let _ = window.eval(
+            "(async () => {\
+               const deadline = Date.now() + 15000;\
+               while (!window.__demoReady && Date.now() < deadline) await new Promise(r => setTimeout(r, 100));\
+               await window.__TAURI__.core.invoke('report', { label: 'ui', value: {\
+                 ready: !!window.__demoReady,\
+                 readyState: document.readyState,\
+                 tools: document.getElementById('tools')?.textContent ?? null,\
+                 errors: window.__demoErrors ?? 'errors.js did not run',\
+               } });\
+             })()",
+        );
+        match wait_report(app, "ui").await {
+            Some((_, v)) => check(
+                "webview UI",
+                v["ready"] == true && v["tools"].as_str().is_some_and(|t| t.contains("notes_list")),
+                v.to_string(),
+            ),
+            None => check("webview UI", false, "no report within 20s".into()),
         }
     } else {
         println!("[SKIP] webview IPC: no window");
@@ -302,4 +316,16 @@ async fn self_test(app: &AppHandle) -> bool {
     server.stop().await;
     check("stop", !server.status().running, "stopped".into());
     ok
+}
+
+/// Waits for a `report` from the webview whose label starts with `prefix`.
+async fn wait_report(app: &AppHandle, prefix: &str) -> Option<(String, Value)> {
+    let deadline = Instant::now() + Duration::from_secs(20);
+    loop {
+        let found = app.state::<WebviewReports>().0.lock().unwrap().iter().find(|(l, _)| l.starts_with(prefix)).cloned();
+        if found.is_some() || Instant::now() > deadline {
+            return found;
+        }
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
 }
