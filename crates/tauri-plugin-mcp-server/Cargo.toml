@@ -21,6 +21,8 @@ rmcp = { workspace = true, features = [
 ] }
 axum = { workspace = true, features = ["http1", "tokio"] }
 tokio = { workspace = true, features = ["sync", "rt", "net", "time", "macros"] }
+tokio-util.workspace = true
+log.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true

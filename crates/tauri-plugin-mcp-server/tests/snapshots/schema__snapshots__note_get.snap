@@ -32,9 +32,13 @@ expression: "super :: schemas(stringify! (note_get))"
     },
     "properties": {
       "body": {
-        "type": [
-          "string",
-          "null"
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
         ]
       },
       "meta": {

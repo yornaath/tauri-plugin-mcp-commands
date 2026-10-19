@@ -3,9 +3,12 @@
 mod dispatch;
 #[cfg(feature = "specta")]
 mod schema;
+mod server;
 mod tool;
+mod transport;
 
 pub use tauri_plugin_mcp_server_macros::{collect_mcp_tools, mcp_tool};
+pub use server::ServerInfo;
 pub use tool::{JsonObject, ToolAnnotations, ToolArgs, ToolDef, ToolError, ToolFuture, ToolHandler, ToolSchemas};
 
 /// Used by generated code. Not public API.
@@ -17,6 +20,19 @@ pub mod __private {
     #[cfg(feature = "specta")]
     pub use specta;
     pub use tauri;
+
+    /// Spike entry point until the plugin builder exists: serves `tools` on
+    /// `127.0.0.1:port` and returns the bound address and a stop token.
+    pub async fn serve<R: tauri::Runtime>(
+        app: tauri::AppHandle<R>,
+        tools: Vec<crate::ToolDef<R>>,
+        info: crate::ServerInfo,
+        port: u16,
+    ) -> std::io::Result<(std::net::SocketAddr, tokio_util::sync::CancellationToken)> {
+        let registry = crate::server::Registry::new(tools).map_err(std::io::Error::other)?;
+        let running = crate::transport::serve(app, std::sync::Arc::new(registry), std::sync::Arc::new(info), port).await?;
+        Ok((running.addr, running.cancel))
+    }
 }
 
 /// Schema source for a `#[specta::specta]` command. Used by generated code.

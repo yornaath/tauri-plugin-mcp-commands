@@ -352,16 +352,10 @@ fn describe(schema: &mut Value, docs: &str) {
     }
 }
 
+/// `anyOf` rather than `"type": [X, "null"]`: some clients map tool schemas
+/// onto single-`type` dialects (e.g. Gemini function declarations).
 fn nullable(inner: Value) -> Value {
-    match inner {
-        // `{ "type": "string" }` → `{ "type": ["string", "null"] }`
-        Value::Object(mut o) if matches!(o.get("type"), Some(Value::String(_))) && !o.contains_key("const") && !o.contains_key("enum") => {
-            let t = o.remove("type").unwrap();
-            o.insert("type".into(), json!([t, "null"]));
-            Value::Object(o)
-        }
-        other => json!({ "anyOf": [other, { "type": "null" }] }),
-    }
+    json!({ "anyOf": [inner, { "type": "null" }] })
 }
 
 fn primitive(p: &Primitive) -> Value {

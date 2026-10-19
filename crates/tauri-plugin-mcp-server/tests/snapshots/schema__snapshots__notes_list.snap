@@ -82,9 +82,13 @@ expression: "super :: schemas(stringify! (notes_list))"
       "Note": {
         "properties": {
           "body": {
-            "type": [
-              "string",
-              "null"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "meta": {

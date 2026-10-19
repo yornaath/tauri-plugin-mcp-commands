@@ -6,11 +6,15 @@ expression: "super :: schemas(stringify! (optional))"
   "input": {
     "properties": {
       "limit": {
-        "maximum": 4294967295,
-        "minimum": 0,
-        "type": [
-          "integer",
-          "null"
+        "anyOf": [
+          {
+            "maximum": 4294967295,
+            "minimum": 0,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
         ]
       }
     },
@@ -19,9 +23,13 @@ expression: "super :: schemas(stringify! (optional))"
   "output": {
     "properties": {
       "result": {
-        "type": [
-          "string",
-          "null"
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
         ]
       }
     },

@@ -3269,6 +3269,7 @@ dependencies = [
  "axum",
  "insta",
  "jsonschema",
+ "log",
  "reqwest",
  "rmcp",
  "serde",
@@ -3280,6 +3281,7 @@ dependencies = [
  "tauri-plugin-mcp-server-macros",
  "thiserror 2.0.21",
  "tokio",
+ "tokio-util",
  "trybuild",
 ]
 
