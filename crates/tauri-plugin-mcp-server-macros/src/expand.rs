@@ -158,6 +158,12 @@ pub fn mcp_tool(args: McpToolArgs, item: ItemFn) -> syn::Result<TokenStream> {
         opt_bool(args.open_world),
     );
 
+    let schema = if item.attrs.iter().any(attrs::is_specta) {
+        quote!(#m::__specta_source!(#call_path))
+    } else {
+        quote!(#p::SchemaSource::Untyped)
+    };
+
     let vis = &item.vis;
     let gen_ident = format_ident!("__mcp_tool_{}", ident.unraw());
     let keys_lit = &keys;
@@ -193,6 +199,7 @@ pub fn mcp_tool(args: McpToolArgs, item: ItemFn) -> syn::Result<TokenStream> {
                         open_world: #open_world,
                     },
                     inputs: __inputs,
+                    schema: #schema,
                 },
                 |__app: #p::tauri::AppHandle<#runtime>, __args: #m::ToolArgs| -> #m::ToolFuture { #body },
             )

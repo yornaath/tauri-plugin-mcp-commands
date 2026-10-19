@@ -26,9 +26,8 @@ heck = "0.5"
 thiserror = "2"
 
 # The specta family is still in RC: pin exactly.
-specta = { version = "=2.0.0-rc.25", features = ["derive", "function"] }
+specta = { version = "=2.0.0-rc.25", features = ["derive", "function", "serde_json"] }
 specta-serde = "=0.0.12"
-specta-jsonschema = "=0.0.3"
 tauri-specta = "=2.0.0-rc.25"
 
 # Macro crate.
@@ -40,3 +39,4 @@ proc-macro2 = "1"
 trybuild = "1"
 insta = { version = "1", features = ["json"] }
 reqwest = { version = "0.13", default-features = false, features = ["json"] }
+jsonschema = { version = "0.59", default-features = false }

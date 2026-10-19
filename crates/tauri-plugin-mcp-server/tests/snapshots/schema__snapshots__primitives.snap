@@ -1,0 +1,61 @@
+---
+source: crates/tauri-plugin-mcp-server/tests/schema.rs
+expression: "super :: schemas(stringify! (primitives))"
+---
+{
+  "input": {
+    "properties": {
+      "big": {
+        "type": "integer"
+      },
+      "flag": {
+        "type": "boolean"
+      },
+      "letter": {
+        "maxLength": 1,
+        "minLength": 1,
+        "type": "string"
+      },
+      "name": {
+        "type": "string"
+      },
+      "pageSize": {
+        "maximum": 4294967295,
+        "minimum": 0,
+        "type": "integer"
+      },
+      "ratio": {
+        "type": "number"
+      },
+      "small": {
+        "maximum": 255,
+        "minimum": 0,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "flag",
+      "name",
+      "small",
+      "big",
+      "ratio",
+      "pageSize",
+      "letter"
+    ],
+    "type": "object"
+  },
+  "output": {
+    "properties": {
+      "result": {
+        "maximum": 4294967295,
+        "minimum": 0,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "result"
+    ],
+    "type": "object"
+  },
+  "wrapOutput": true
+}

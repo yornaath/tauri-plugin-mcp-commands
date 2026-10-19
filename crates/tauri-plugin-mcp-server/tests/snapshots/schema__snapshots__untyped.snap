@@ -1,0 +1,17 @@
+---
+source: crates/tauri-plugin-mcp-server/tests/schema.rs
+expression: "super :: schemas(stringify! (untyped))"
+---
+{
+  "input": {
+    "properties": {
+      "anything": {}
+    },
+    "required": [
+      "anything"
+    ],
+    "type": "object"
+  },
+  "output": null,
+  "wrapOutput": false
+}

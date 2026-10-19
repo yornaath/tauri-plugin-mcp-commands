@@ -1,6 +1,12 @@
-use std::{borrow::Cow, future::Future, pin::Pin, sync::Arc, time::Duration};
+use std::{
+    borrow::Cow,
+    future::Future,
+    pin::Pin,
+    sync::{Arc, OnceLock},
+    time::Duration,
+};
 
-use serde_json::{Map, Value};
+use serde_json::{Map, Value, json};
 use tauri::{AppHandle, Runtime};
 
 /// Arguments of one tool call: the MCP `arguments` object.
@@ -43,6 +49,28 @@ pub struct ToolAnnotations {
     pub open_world: Option<bool>,
 }
 
+pub type JsonObject = Map<String, Value>;
+
+/// JSON Schemas for one tool.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ToolSchemas {
+    pub input: JsonObject,
+    /// `None` when the command returns `()`.
+    pub output: Option<JsonObject>,
+    /// MCP requires an object output schema. Non-object results are wrapped as
+    /// `{ "result": … }`, and so is the structured content.
+    pub wrap_output: bool,
+}
+
+/// Where a tool's schemas come from.
+#[doc(hidden)]
+pub enum SchemaSource {
+    /// No type information: every input is accepted as any JSON value.
+    Untyped,
+    #[cfg(feature = "specta")]
+    Specta(fn(&mut specta::Types) -> specta::datatype::Function),
+}
+
 /// One tool the MCP server exposes.
 pub struct ToolDef<R: Runtime> {
     pub(crate) name: Cow<'static, str>,
@@ -50,6 +78,8 @@ pub struct ToolDef<R: Runtime> {
     pub(crate) annotations: ToolAnnotations,
     /// IPC names of the parameters that are MCP inputs, in declaration order.
     pub(crate) inputs: Vec<&'static str>,
+    pub(crate) schema_source: SchemaSource,
+    pub(crate) schemas: OnceLock<Result<ToolSchemas, String>>,
     pub(crate) handler: ToolHandler<R>,
 }
 
@@ -71,6 +101,22 @@ impl<R: Runtime> ToolDef<R> {
         &self.inputs
     }
 
+    /// The tool's schemas, built on first use.
+    pub fn schemas(&self) -> Result<&ToolSchemas, &str> {
+        self.schemas
+            .get_or_init(|| match &self.schema_source {
+                SchemaSource::Untyped => Ok(untyped_schemas(&self.inputs)),
+                #[cfg(feature = "specta")]
+                SchemaSource::Specta(f) => {
+                    let mut types = specta::Types::default();
+                    let func = f(&mut types);
+                    crate::schema::from_function(&func, &types, &self.inputs)
+                }
+            })
+            .as_ref()
+            .map_err(String::as_str)
+    }
+
     /// Runs the tool.
     pub fn call(&self, app: AppHandle<R>, args: ToolArgs) -> ToolFuture {
         (self.handler)(app, args)
@@ -87,6 +133,7 @@ pub struct MacroMeta {
     pub description: Option<&'static str>,
     pub annotations: ToolAnnotations,
     pub inputs: Vec<&'static str>,
+    pub schema: SchemaSource,
 }
 
 #[doc(hidden)]
@@ -100,9 +147,17 @@ impl<R: Runtime> ToolDef<R> {
             description: meta.description.map(Cow::Borrowed),
             annotations: meta.annotations,
             inputs: meta.inputs,
+            schema_source: meta.schema,
+            schemas: OnceLock::new(),
             handler: Arc::new(handler),
         }
     }
+}
+
+fn untyped_schemas(inputs: &[&str]) -> ToolSchemas {
+    let properties: JsonObject = inputs.iter().map(|n| ((*n).to_owned(), json!({}))).collect();
+    let Value::Object(input) = json!({ "type": "object", "properties": properties }) else { unreachable!() };
+    ToolSchemas { input, output: None, wrap_output: false }
 }
 
 /// Runs a sync command on the main thread, like Tauri does for IPC calls.

@@ -1,0 +1,34 @@
+---
+source: crates/tauri-plugin-mcp-server/tests/schema.rs
+expression: "super :: schemas(stringify! (optional))"
+---
+{
+  "input": {
+    "properties": {
+      "limit": {
+        "maximum": 4294967295,
+        "minimum": 0,
+        "type": [
+          "integer",
+          "null"
+        ]
+      }
+    },
+    "type": "object"
+  },
+  "output": {
+    "properties": {
+      "result": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    },
+    "required": [
+      "result"
+    ],
+    "type": "object"
+  },
+  "wrapOutput": true
+}

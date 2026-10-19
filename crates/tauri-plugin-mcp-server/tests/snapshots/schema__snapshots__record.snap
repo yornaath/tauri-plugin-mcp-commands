@@ -1,0 +1,65 @@
+---
+source: crates/tauri-plugin-mcp-server/tests/schema.rs
+expression: "super :: schemas(stringify! (record))"
+---
+{
+  "input": {
+    "$defs": {
+      "Event": {
+        "anyOf": [
+          {
+            "properties": {
+              "id": {
+                "maximum": 4294967295,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "kind": {
+                "const": "created",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "id"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "hard": {
+                "type": "boolean"
+              },
+              "id": {
+                "maximum": 4294967295,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "kind": {
+                "const": "deleted",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "id",
+              "hard"
+            ],
+            "type": "object"
+          }
+        ]
+      }
+    },
+    "properties": {
+      "event": {
+        "$ref": "#/$defs/Event"
+      }
+    },
+    "required": [
+      "event"
+    ],
+    "type": "object"
+  },
+  "output": null,
+  "wrapOutput": false
+}

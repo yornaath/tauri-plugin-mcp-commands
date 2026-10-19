@@ -1,0 +1,72 @@
+---
+source: crates/tauri-plugin-mcp-server/tests/schema.rs
+expression: "super :: schemas(stringify! (note_get))"
+---
+{
+  "input": {
+    "properties": {
+      "id": {
+        "maximum": 4294967295,
+        "minimum": 0,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "id"
+    ],
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "Meta": {
+        "properties": {
+          "created_at": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "created_at"
+        ],
+        "type": "object"
+      }
+    },
+    "properties": {
+      "body": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "meta": {
+        "$ref": "#/$defs/Meta"
+      },
+      "noteId": {
+        "description": "Stable identifier.",
+        "maximum": 4294967295,
+        "minimum": 0,
+        "type": "integer"
+      },
+      "pinned": {
+        "type": "boolean"
+      },
+      "tags": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "title": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "noteId",
+      "title",
+      "tags",
+      "body",
+      "meta"
+    ],
+    "type": "object"
+  },
+  "wrapOutput": false
+}

@@ -1,0 +1,63 @@
+---
+source: crates/tauri-plugin-mcp-server/tests/schema.rs
+expression: "super :: schemas(stringify! (page))"
+---
+{
+  "input": {
+    "properties": {
+      "counts": {
+        "additionalProperties": {
+          "maximum": 4294967295,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "type": "object"
+      }
+    },
+    "required": [
+      "counts"
+    ],
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "Tree": {
+        "properties": {
+          "children": {
+            "items": {
+              "$ref": "#/$defs/Tree"
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "children"
+        ],
+        "type": "object"
+      }
+    },
+    "properties": {
+      "items": {
+        "items": {
+          "$ref": "#/$defs/Tree"
+        },
+        "type": "array"
+      },
+      "total": {
+        "maximum": 4294967295,
+        "minimum": 0,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "items",
+      "total"
+    ],
+    "type": "object"
+  },
+  "wrapOutput": false
+}
