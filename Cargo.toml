@@ -3,6 +3,7 @@ resolver = "3"
 members = [
     "crates/tauri-plugin-mcp-server",
     "crates/tauri-plugin-mcp-server-macros",
+    "crates/mcp-stdio-bridge",
     "examples/demo-app",
 ]
 

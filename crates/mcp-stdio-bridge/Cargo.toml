@@ -1,0 +1,25 @@
+[package]
+name = "mcp-stdio-bridge"
+description = "stdio <-> HTTP bridge for Tauri apps using tauri-plugin-mcp-server, for stdio-only MCP clients such as Claude Desktop"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+rmcp = { workspace = true, features = [
+    "server",
+    "client",
+    "transport-io",
+    "transport-streamable-http-client-reqwest",
+] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "time", "sync", "io-std"] }
+serde.workspace = true
+serde_json.workspace = true
+dirs.workspace = true
+clap.workspace = true
+
+[dev-dependencies]
+tauri-plugin-mcp-server = { path = "../tauri-plugin-mcp-server" }
+tauri = { workspace = true, features = ["test"] }
+specta.workspace = true
