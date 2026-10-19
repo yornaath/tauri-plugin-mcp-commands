@@ -1,0 +1,5 @@
+error: invalid MCP tool name `has space`: use 1-128 characters from [A-Za-z0-9_.-]
+ --> tests/ui/bad_name.rs:3:19
+  |
+3 | #[mcp_tool(name = "has space")]
+  |                   ^^^^^^^^^^^

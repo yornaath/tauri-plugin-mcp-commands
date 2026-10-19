@@ -1,0 +1,5 @@
+error: `WebviewWindow` can't be a parameter of an `#[mcp_tool]` command: an MCP tool call has no calling window. Take an `AppHandle` and look the window up instead, e.g. `app.get_webview_window("main")`
+ --> tests/ui/window_arg.rs:6:36
+  |
+6 | async fn focus<R: Runtime>(window: tauri::WebviewWindow<R>) -> Result<(), String> {
+  |                                    ^^^^^^^^^^^^^^^^^^^^^^^

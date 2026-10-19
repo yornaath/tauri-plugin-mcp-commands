@@ -32,7 +32,7 @@ specta-jsonschema = "=0.0.3"
 tauri-specta = "=2.0.0-rc.25"
 
 # Macro crate.
-syn = { version = "2", features = ["full", "extra-traits"] }
+syn = { version = "2", features = ["full", "extra-traits", "visit", "visit-mut"] }
 quote = "1"
 proc-macro2 = "1"
 
