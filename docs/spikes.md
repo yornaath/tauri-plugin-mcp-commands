@@ -166,3 +166,7 @@ Security that rmcp gives us:
 ## Release build check
 
 `cargo build --release -p demo-app`, then `--tray-only --self-test` and `--hidden --self-test`. Every check passed, with the same thread placement as the debug build. Nothing in the plugin is gated on `debug_assertions`.
+
+## Workspace gotcha: `common-controls-v6`
+
+Tauri's default `common-controls-v6` feature makes Windows binaries import from comctl32 v6. That import only resolves when the binary embeds an app manifest, which `tauri-build` adds for the app but not for test binaries. With the demo app in the workspace, feature unification enabled the feature for the core crate's tests too, and they died with `0xc0000139` (STATUS_ENTRYPOINT_NOT_FOUND). The demo app now uses Tauri's defaults minus that feature. Mention this in the README's testing section: app developers who test `#[mcp_tool]` commands with `tauri::test` will hit the same thing.

@@ -11,7 +11,10 @@ tauri-build = { workspace = true }
 
 [dependencies]
 tauri-plugin-mcp-server = { path = "../../crates/tauri-plugin-mcp-server" }
-tauri = { workspace = true, features = ["default", "tray-icon"] }
+# Tauri's defaults minus `common-controls-v6`: that feature needs an embedded
+# app manifest, which test binaries lack, and feature unification would turn
+# it on for the whole workspace (`cargo test` then dies with 0xc0000139).
+tauri = { workspace = true, features = ["wry", "compression", "dynamic-acl", "x11", "dbus", "tray-icon"] }
 specta.workspace = true
 serde.workspace = true
 serde_json.workspace = true
