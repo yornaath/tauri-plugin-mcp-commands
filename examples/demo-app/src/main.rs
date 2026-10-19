@@ -156,10 +156,10 @@ fn main() {
         .expect("error while building the app")
         .run(move |_app, event| {
             // Tray-only: closing every window must not quit; `app.exit(code)` still does.
-            if let RunEvent::ExitRequested { api, code: None, .. } = event {
-                if tray_only {
-                    api.prevent_exit();
-                }
+            if let RunEvent::ExitRequested { api, code: None, .. } = event
+                && tray_only
+            {
+                api.prevent_exit();
             }
         });
 }
@@ -264,10 +264,13 @@ async fn self_test(app: &AppHandle) -> bool {
 
     // The same commands still work over IPC from the webview.
     if let Some(window) = app.get_webview_window("main") {
+        // App commands, plugin commands (through the ACL), and the UI script.
         let _ = window.eval(
-            "Promise.all([window.__TAURI__.core.invoke('where_sync'), window.__TAURI__.core.invoke('notes_list', { tag: 'agent' })])\
-               .then(v => window.__TAURI__.core.invoke('report', { label: 'ipc', value: v }))\
-               .catch(e => window.__TAURI__.core.invoke('report', { label: 'error', value: String(e) }))",
+            "const i = window.__TAURI__.core.invoke;\
+             Promise.all([i('where_sync'), i('notes_list', { tag: 'agent' }), i('plugin:mcp-server|status'),\
+                          i('plugin:mcp-server|connection_configs')])\
+               .then(v => i('report', { label: 'ipc', value: [...v, document.getElementById('tools').textContent] }))\
+               .catch(e => i('report', { label: 'error', value: String(e) }))",
         );
         let deadline = Instant::now() + Duration::from_secs(10);
         let reported = loop {
@@ -282,8 +285,13 @@ async fn self_test(app: &AppHandle) -> bool {
         match reported {
             Some((label, v)) => check(
                 "webview IPC",
-                label == "ipc" && v[0]["onMainThread"] == true && v[1][0]["title"] == "From MCP",
-                format!("{v}"),
+                label == "ipc"
+                    && v[0]["onMainThread"] == true
+                    && v[1][0]["title"] == "From MCP"
+                    && v[2]["running"] == true
+                    && v[3]["claudeCode"].as_str().is_some_and(|c| c.starts_with("claude mcp add"))
+                    && v[4].as_str().is_some_and(|t| t.contains("notes_list")),
+                format!("{}", json!({ "where": v[0], "status.running": v[2]["running"], "uiTools": v[4], "raw": v })),
             ),
             None => check("webview IPC", false, "no report within 10s".into()),
         }

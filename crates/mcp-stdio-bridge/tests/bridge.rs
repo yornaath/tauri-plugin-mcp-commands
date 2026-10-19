@@ -3,7 +3,7 @@
 
 use std::{
     io::{BufRead, BufReader, Write},
-    path::PathBuf,
+    path::Path,
     process::{Child, ChildStdin, Command, Stdio},
     sync::mpsc,
     time::{Duration, Instant},
@@ -29,7 +29,7 @@ struct Bridge {
 }
 
 impl Bridge {
-    fn spawn(discovery: &PathBuf) -> Self {
+    fn spawn(discovery: &Path) -> Self {
         let mut child = Command::new(env!("CARGO_BIN_EXE_mcp-stdio-bridge"))
             .args(["--discovery", discovery.to_str().unwrap(), "--poll", "1"])
             .stdin(Stdio::piped())

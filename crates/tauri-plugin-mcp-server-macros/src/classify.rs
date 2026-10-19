@@ -31,6 +31,7 @@ pub fn window_bound(ty: &Type) -> Option<&'static str> {
 }
 
 /// The runtime type the generated `ToolDef<_>` is parameterised by.
+#[allow(clippy::large_enum_variant)] // parse-time only
 pub enum RuntimeParam {
     /// The command is generic over a `Runtime` param; reuse it.
     Existing(syn::Ident),

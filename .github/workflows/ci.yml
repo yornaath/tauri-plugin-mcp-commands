@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev xvfb
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test --workspace
+      - run: cargo test -p tauri-plugin-mcp-server --features schemars
+      - run: cargo check -p tauri-plugin-mcp-server --no-default-features
+      # Main-thread dispatch in a real app: tray-only (no windows) and hidden window.
+      - name: Demo self-test
+        shell: bash
+        run: |
+          cargo build -p demo-app -p mcp-stdio-bridge
+          run() { if [ "$RUNNER_OS" = Linux ]; then xvfb-run -a "$@"; else "$@"; fi; }
+          run ./target/debug/demo-app --tray-only --self-test --port 43110
+          run ./target/debug/demo-app --hidden --self-test --port 43110
+
+  # Builds against the newest compatible versions of every dependency.
+  latest-deps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev
+      - run: cargo update && cargo test --workspace
+
+  guest-js:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: guest-js
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci && npm run build
+      - run: npx -y @anthropic-ai/mcpb@2 validate ../templates/mcpb/manifest.json

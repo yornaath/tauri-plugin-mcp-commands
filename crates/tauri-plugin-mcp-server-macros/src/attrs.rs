@@ -80,6 +80,7 @@ pub struct CommandAttrs {
     pub run_async: bool,
 }
 
+#[allow(clippy::large_enum_variant)] // parse-time only
 enum CommandItem {
     Meta(Meta),
     Async,

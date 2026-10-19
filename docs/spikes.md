@@ -170,3 +170,10 @@ Security that rmcp gives us:
 ## Workspace gotcha: `common-controls-v6`
 
 Tauri's default `common-controls-v6` feature makes Windows binaries import from comctl32 v6. That import only resolves when the binary embeds an app manifest, which `tauri-build` adds for the app but not for test binaries. With the demo app in the workspace, feature unification enabled the feature for the core crate's tests too, and they died with `0xc0000139` (STATUS_ENTRYPOINT_NOT_FOUND). The demo app now uses Tauri's defaults minus that feature. Mention this in the README's testing section: app developers who test `#[mcp_tool]` commands with `tauri::test` will hit the same thing.
+
+## Phase B follow-ups to the spike findings
+
+- **specta schemas no longer use `fn_datatype!`.** Its expansion defines an inner `fn` item, which can't use a generic command's `R`. The macro now builds the datatypes per parameter in a closure, from `<T as specta::function::FunctionArg>::to_datatype` and `<Ret as specta::Type>::definition`, which can use outer generics. So generic commands need no turbofish, and `#[mcp_tool(specta)]` opts in even when `#[specta::specta]` sits above the attribute.
+- **`Channel`, `Request`, `CommandScope` and `GlobalScope` now get a clear compile error**, through the same type-based check as window types.
+- **New `schemars` feature** for commands without specta.
+- **MSRV is 1.90**, Tauri 2.12's minimum.

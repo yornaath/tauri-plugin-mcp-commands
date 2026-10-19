@@ -1,0 +1,27 @@
+{
+  "name": "tauri-plugin-mcp-server-api",
+  "version": "0.1.0",
+  "description": "JavaScript bindings for tauri-plugin-mcp-server: start/stop the app's MCP server, read its status, answer access requests",
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc -p .",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "@tauri-apps/api": "^2.0.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/api": "^2.12.4",
+    "typescript": "^7.0.2"
+  }
+}

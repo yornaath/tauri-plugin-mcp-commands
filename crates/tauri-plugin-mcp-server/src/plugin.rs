@@ -158,10 +158,10 @@ impl<R: Runtime> Builder<R> {
                 Ok(())
             })
             .on_event(|app, event| {
-                if let RunEvent::Exit = event {
-                    if let Some(server) = app.try_state::<McpServer<R>>() {
-                        tauri::async_runtime::block_on(server.stop());
-                    }
+                if let RunEvent::Exit = event
+                    && let Some(server) = app.try_state::<McpServer<R>>()
+                {
+                    tauri::async_runtime::block_on(server.stop());
                 }
             })
             .build()

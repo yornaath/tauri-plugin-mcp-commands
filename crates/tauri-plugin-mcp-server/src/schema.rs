@@ -127,12 +127,11 @@ impl<'t> Cx<'t> {
     /// Like `convert`, but inlines a top-level named reference so the root
     /// schema shows its real `type`.
     fn convert_root(&mut self, dt: &DataType) -> Value {
-        if let DataType::Reference(Reference::Named(r)) = dt {
-            if let (Some(ndt), NamedReferenceType::Reference { generics, .. }) = (self.types.get(r), &r.inner) {
-                if generics.is_empty() {
-                    return self.named_body(ndt, &[], 0);
-                }
-            }
+        if let DataType::Reference(Reference::Named(r)) = dt
+            && let (Some(ndt), NamedReferenceType::Reference { generics, .. }) = (self.types.get(r), &r.inner)
+            && generics.is_empty()
+        {
+            return self.named_body(ndt, &[], 0);
         }
         self.convert(dt, &[], 0)
     }

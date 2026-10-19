@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/mcpb/main/dist/mcpb-manifest.schema.json",
+  "manifest_version": "0.3",
+  "name": "my-tauri-app",
+  "display_name": "My Tauri App",
+  "version": "0.1.0",
+  "description": "Lets Claude use My Tauri App's tools while the app is running.",
+  "long_description": "Connects to My Tauri App on this computer through its local MCP server. Turn on agent access in the app's settings; tools appear while the app is running.",
+  "author": {
+    "name": "Your Name"
+  },
+  "server": {
+    "type": "binary",
+    "entry_point": "server/mcp-stdio-bridge",
+    "mcp_config": {
+      "command": "${__dirname}/server/mcp-stdio-bridge",
+      "args": ["--app-id", "com.example.my-tauri-app"],
+      "platform_overrides": {
+        "win32": {
+          "command": "${__dirname}/server/mcp-stdio-bridge.exe"
+        }
+      }
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"]
+  }
+}
