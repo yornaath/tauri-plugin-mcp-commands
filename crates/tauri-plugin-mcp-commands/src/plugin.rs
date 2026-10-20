@@ -127,7 +127,7 @@ impl<R: Runtime> Builder<R> {
     }
 
     /// Where the token and discovery file live. Defaults to
-    /// `<app_data_dir>/mcp-server`.
+    /// `<app_data_dir>/mcp-commands`.
     pub fn data_dir(mut self, dir: impl Into<PathBuf>) -> Self {
         self.data_dir = Some(dir.into());
         self
@@ -142,7 +142,7 @@ impl<R: Runtime> Builder<R> {
 
     pub fn build(self) -> TauriPlugin<R> {
         let config = Mutex::new(Some(self));
-        PluginBuilder::<R>::new("mcp-server")
+        PluginBuilder::<R>::new("mcp-commands")
             .invoke_handler(tauri::generate_handler![
                 commands::start,
                 commands::stop,

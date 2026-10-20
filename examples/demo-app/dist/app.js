@@ -5,12 +5,12 @@ const { invoke } = window.__TAURI__.core
 const { listen } = window.__TAURI__.event
 
 const mcp = {
-  start: () => invoke('plugin:mcp-server|start'),
-  stop: () => invoke('plugin:mcp-server|stop'),
-  status: () => invoke('plugin:mcp-server|status'),
-  connectionConfigs: () => invoke('plugin:mcp-server|connection_configs'),
-  respondAccess: (id, allow) => invoke('plugin:mcp-server|respond_access', { id, allow }),
-  rotateToken: () => invoke('plugin:mcp-server|rotate_token'),
+  start: () => invoke('plugin:mcp-commands|start'),
+  stop: () => invoke('plugin:mcp-commands|stop'),
+  status: () => invoke('plugin:mcp-commands|status'),
+  connectionConfigs: () => invoke('plugin:mcp-commands|connection_configs'),
+  respondAccess: (id, allow) => invoke('plugin:mcp-commands|respond_access', { id, allow }),
+  rotateToken: () => invoke('plugin:mcp-commands|rotate_token'),
 }
 
 const $ = (id) => document.getElementById(id)

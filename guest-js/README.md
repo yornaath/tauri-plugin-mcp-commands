@@ -13,4 +13,4 @@ await onAccessRequested(async ({ id, client }) => {
 })
 ```
 
-Permissions: `mcp-server:default` (start, stop, status), plus `mcp-server:allow-connection-configs`, `mcp-server:allow-rotate-token` and `mcp-server:allow-respond-access` as needed.
+Permissions: `mcp-commands:default` (start, stop, status), plus `mcp-commands:allow-connection-configs`, `mcp-commands:allow-rotate-token` and `mcp-commands:allow-respond-access` as needed.

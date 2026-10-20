@@ -1,11 +1,11 @@
 /**
  * Bindings for `tauri-plugin-mcp-commands`.
  *
- * Permissions: `mcp-server:default` allows `start`, `stop` and `status`.
+ * Permissions: `mcp-commands:default` allows `start`, `stop` and `status`.
  * `connectionConfigs` (which contains the bearer token), `rotateToken` and
  * `respondAccess` each need their own permission:
- * `mcp-server:allow-connection-configs`, `mcp-server:allow-rotate-token`,
- * `mcp-server:allow-respond-access`.
+ * `mcp-commands:allow-connection-configs`, `mcp-commands:allow-rotate-token`,
+ * `mcp-commands:allow-respond-access`.
  */
 
 import { invoke } from '@tauri-apps/api/core'
@@ -61,21 +61,21 @@ export const EVENT_ACCESS_REQUESTED = 'mcp://access-requested'
 
 /** Starts the server (a no-op if it is running). */
 export function start(): Promise<Status> {
-  return invoke('plugin:mcp-server|start')
+  return invoke('plugin:mcp-commands|start')
 }
 
 /** Stops the server and closes its port. */
 export function stop(): Promise<Status> {
-  return invoke('plugin:mcp-server|stop')
+  return invoke('plugin:mcp-commands|stop')
 }
 
 export function status(): Promise<Status> {
-  return invoke('plugin:mcp-server|status')
+  return invoke('plugin:mcp-commands|status')
 }
 
 /** Client configurations, or `null` while the server is stopped. */
 export function connectionConfigs(): Promise<ConnectionConfigs | null> {
-  return invoke('plugin:mcp-server|connection_configs')
+  return invoke('plugin:mcp-commands|connection_configs')
 }
 
 /**
@@ -83,12 +83,12 @@ export function connectionConfigs(): Promise<ConnectionConfigs | null> {
  * pending (already answered, timed out or cancelled).
  */
 export function respondAccess(id: number, allow: boolean): Promise<boolean> {
-  return invoke('plugin:mcp-server|respond_access', { id, allow })
+  return invoke('plugin:mcp-commands|respond_access', { id, allow })
 }
 
 /** Replaces the bearer token; every client must be reconfigured. */
 export function rotateToken(): Promise<void> {
-  return invoke('plugin:mcp-server|rotate_token')
+  return invoke('plugin:mcp-commands|rotate_token')
 }
 
 export function onClientConnected(handler: (client: ConnectedClient) => void): Promise<UnlistenFn> {

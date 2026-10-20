@@ -5,9 +5,9 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
-    "mcp-server:default",
-    "mcp-server:allow-connection-configs",
-    "mcp-server:allow-respond-access",
-    "mcp-server:allow-rotate-token"
+    "mcp-commands:default",
+    "mcp-commands:allow-connection-configs",
+    "mcp-commands:allow-respond-access",
+    "mcp-commands:allow-rotate-token"
   ]
 }

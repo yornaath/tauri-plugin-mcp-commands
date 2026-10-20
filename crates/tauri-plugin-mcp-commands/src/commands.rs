@@ -51,16 +51,16 @@ pub(crate) fn rotate_token<R: Runtime>(app: AppHandle<R>) -> Result<(), Error> {
 ///
 /// ```ignore
 /// tauri_plugin_mcp_commands::specta_builder()
-///     .export(specta_typescript::Typescript::default(), "../src/bindings/mcp-server.ts")?;
+///     .export(specta_typescript::Typescript::default(), "../src/bindings/mcp-commands.ts")?;
 /// ```
 ///
-/// Commands are invoked as `plugin:mcp-server|<name>`. The event payloads
+/// Commands are invoked as `plugin:mcp-commands|<name>`. The event payloads
 /// [`ConnectedClient`](crate::ConnectedClient) and
 /// [`AccessRequest`](crate::AccessRequest) are exported as types.
 #[cfg(feature = "tauri-specta")]
 pub fn specta_builder() -> tauri_specta::Builder<tauri::Wry> {
     tauri_specta::Builder::<tauri::Wry>::new()
-        .plugin_name("mcp-server")
+        .plugin_name("mcp-commands")
         // Everything crosses the IPC as JSON, so 64-bit integers (request ids,
         // numbers inside `serde_json::Value`) arrive as JS numbers anyway.
         .dangerously_cast_bigints_to_number()

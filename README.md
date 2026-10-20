@@ -93,10 +93,10 @@ const { claudeCode } = (await connectionConfigs())!
 Add the permissions you use to your capability file:
 
 ```json
-"permissions": ["mcp-server:default", "mcp-server:allow-connection-configs"]
+"permissions": ["mcp-commands:default", "mcp-commands:allow-connection-configs"]
 ```
 
-`mcp-server:default` allows `start`, `stop` and `status`. `allow-connection-configs` exposes the bearer token to the webview. `allow-rotate-token` and `allow-respond-access` are also separate.
+`mcp-commands:default` allows `start`, `stop` and `status`. `allow-connection-configs` exposes the bearer token to the webview. `allow-rotate-token` and `allow-respond-access` are also separate.
 
 [`examples/demo-app`](examples/demo-app) is a complete app with a settings panel: `cargo run -p demo-app`.
 
@@ -192,7 +192,7 @@ Builder options:
 | `autostart(bool)` | `false` | Start when the app starts. |
 | `require_approval(bool)` | `false` | Ask before serving each new client. |
 | `approval_timeout(d)` | 120 s | A request with no answer by then is denied. |
-| `data_dir(path)` | `<app_data_dir>/mcp-server` | Where the token and discovery file live. |
+| `data_dir(path)` | `<app_data_dir>/mcp-commands` | Where the token and discovery file live. |
 | `bridge_path(path)` | none | Used to render the Claude Desktop config. |
 
 Events:
@@ -208,7 +208,7 @@ With the `specta` feature (default), the plugin's commands carry `#[specta::spec
 
 ```rust
 tauri_plugin_mcp_commands::specta_builder()
-    .export(specta_typescript::Typescript::default(), "../src/bindings/mcp-server.ts")?;
+    .export(specta_typescript::Typescript::default(), "../src/bindings/mcp-commands.ts")?;
 ```
 
 ## Connecting agents

@@ -3,7 +3,7 @@
 
 #[test]
 fn exports_typescript_bindings() {
-    let path = std::env::temp_dir().join(format!("mcp-server-bindings-{}.ts", std::process::id()));
+    let path = std::env::temp_dir().join(format!("mcp-commands-bindings-{}.ts", std::process::id()));
     tauri_plugin_mcp_commands::specta_builder()
         .export(specta_typescript::Typescript::default(), &path)
         .expect("export succeeds without bigints");
@@ -19,7 +19,7 @@ fn exports_typescript_bindings() {
         "rotate_token",
     ] {
         assert!(
-            ts.contains(&format!("\"plugin:mcp-server|{command}\"")),
+            ts.contains(&format!("\"plugin:mcp-commands|{command}\"")),
             "missing {command}:\n{ts}"
         );
     }

@@ -267,8 +267,8 @@ async fn self_test(app: &AppHandle) -> bool {
         // App commands and plugin commands (through the ACL).
         let _ = window.eval(
             "const i = window.__TAURI__.core.invoke;\
-             Promise.all([i('where_sync'), i('notes_list', { tag: 'agent' }), i('plugin:mcp-server|status'),\
-                          i('plugin:mcp-server|connection_configs')])\
+             Promise.all([i('where_sync'), i('notes_list', { tag: 'agent' }), i('plugin:mcp-commands|status'),\
+                          i('plugin:mcp-commands|connection_configs')])\
                .then(v => i('report', { label: 'ipc', value: v }))\
                .catch(e => i('report', { label: 'ipc-error', value: String(e) }))",
         );

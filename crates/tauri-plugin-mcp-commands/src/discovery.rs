@@ -1,4 +1,4 @@
-//! The discovery file, `<app_data_dir>/mcp-server/mcp.json`: how local tools
+//! The discovery file, `<app_data_dir>/mcp-commands/mcp.json`: how local tools
 //! such as the stdio bridge find a running server. Owner-only, written on
 //! start and removed on stop.
 
@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::secure_fs;
 
-pub const DIR_NAME: &str = "mcp-server";
+pub const DIR_NAME: &str = "mcp-commands";
 pub const FILE_NAME: &str = "mcp.json";
 
 /// Contents of `mcp.json`. The bridge reads the same format.
