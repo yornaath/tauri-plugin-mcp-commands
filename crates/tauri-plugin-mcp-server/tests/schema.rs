@@ -79,7 +79,15 @@ pub struct Repo;
 #[mcp_tool]
 #[tauri::command]
 #[specta::specta]
-fn primitives(flag: bool, name: String, small: u8, big: i64, ratio: f64, page_size: u32, letter: char) -> u32 {
+fn primitives(
+    flag: bool,
+    name: String,
+    small: u8,
+    big: i64,
+    ratio: f64,
+    page_size: u32,
+    letter: char,
+) -> u32 {
     let _ = (flag, name, small, big, ratio, letter);
     page_size
 }
@@ -95,7 +103,11 @@ fn optional(limit: Option<u32>) -> Option<String> {
 #[mcp_tool(read_only)]
 #[tauri::command]
 #[specta::specta]
-async fn notes_list(_repo: State<'_, Repo>, priority: Priority, shape: Shape) -> Result<Vec<Note>, String> {
+async fn notes_list(
+    _repo: State<'_, Repo>,
+    priority: Priority,
+    shape: Shape,
+) -> Result<Vec<Note>, String> {
     let _ = (priority, shape);
     Ok(vec![])
 }
@@ -127,7 +139,10 @@ async fn filter(filters: Filters) -> Filters {
 #[specta::specta]
 async fn page(counts: HashMap<String, u32>) -> Page<Tree> {
     let _ = counts;
-    Page { items: vec![], total: 0 }
+    Page {
+        items: vec![],
+        total: 0,
+    }
 }
 
 #[mcp_tool]
@@ -138,7 +153,9 @@ async fn untyped(anything: serde_json::Value) {
 }
 
 fn tools() -> Vec<ToolDef<MockRuntime>> {
-    collect_mcp_tools![primitives, optional, notes_list, note_get, record, filter, page, untyped]
+    collect_mcp_tools![
+        primitives, optional, notes_list, note_get, record, filter, page, untyped
+    ]
 }
 
 fn schemas(name: &str) -> serde_json::Value {
@@ -161,7 +178,9 @@ macro_rules! snapshot {
     };
 }
 
-snapshot!(primitives, optional, notes_list, note_get, record, filter, page, untyped);
+snapshot!(
+    primitives, optional, notes_list, note_get, record, filter, page, untyped
+);
 
 #[mcp_tool]
 #[tauri::command]
@@ -176,7 +195,8 @@ async fn note_create(note: Note, event: Event, shape: Shape, filters: Filters) -
 fn schemas_accept_real_values() {
     let tools: Vec<ToolDef<MockRuntime>> = collect_mcp_tools![note_create, page];
     let validator = |schema: &tauri_plugin_mcp_server::JsonObject| {
-        jsonschema::draft202012::new(&serde_json::Value::Object(schema.clone())).expect("valid 2020-12 schema")
+        jsonschema::draft202012::new(&serde_json::Value::Object(schema.clone()))
+            .expect("valid 2020-12 schema")
     };
 
     let create = validator(&tools[0].schemas().unwrap().input);
@@ -188,7 +208,14 @@ fn schemas_accept_real_values() {
         "shape": "Empty",
         "filters": { "tags": "one" },
     });
-    assert!(create.is_valid(&input), "{:?}", create.iter_errors(&input).map(|e| e.to_string()).collect::<Vec<_>>());
+    assert!(
+        create.is_valid(&input),
+        "{:?}",
+        create
+            .iter_errors(&input)
+            .map(|e| e.to_string())
+            .collect::<Vec<_>>()
+    );
     for bad in [
         json!({ "note": { "title": "t" }, "event": { "kind": "deleted", "id": 3, "hard": true }, "shape": "Empty", "filters": { "tags": [] } }),
         json!({ "note": input["note"], "event": { "kind": "nope", "id": 3 }, "shape": "Empty", "filters": { "tags": [] } }),
@@ -212,14 +239,56 @@ fn schemas_accept_real_values() {
 
     let page_out = validator(tools[1].schemas().unwrap().output.as_ref().unwrap());
     let tree = Page {
-        items: vec![Tree { name: "root".into(), children: vec![Tree { name: "leaf".into(), children: vec![] }] }],
+        items: vec![Tree {
+            name: "root".into(),
+            children: vec![Tree {
+                name: "leaf".into(),
+                children: vec![],
+            }],
+        }],
         total: 1,
     };
     let value = serde_json::to_value(&tree).unwrap();
     assert!(page_out.is_valid(&value), "{value}");
-    for v in [Shape::Circle { radius: 1.0 }, Shape::Square(2.0), Shape::Empty] {
+    for v in [
+        Shape::Circle { radius: 1.0 },
+        Shape::Square(2.0),
+        Shape::Empty,
+    ] {
         let shape_schema = validator(&tools[0].schemas().unwrap().input);
         let input = json!({ "note": input["note"], "event": input["event"], "shape": serde_json::to_value(&v).unwrap(), "filters": { "tags": [] } });
         assert!(shape_schema.is_valid(&input), "{input}");
     }
+}
+
+#[mcp_tool]
+#[tauri::command]
+#[specta::specta]
+async fn plant(tree: Tree) {
+    let _ = tree;
+}
+
+/// Struct parameters are inlined so clients that don't resolve `$ref` see their shape.
+#[test]
+fn struct_inputs_are_inlined() {
+    let tools: Vec<ToolDef<MockRuntime>> = collect_mcp_tools![note_create, plant];
+    let input = &tools[0].schemas().unwrap().input;
+    assert_eq!(input["properties"]["note"]["type"], "object");
+    assert_eq!(
+        input["properties"]["note"]["properties"]["meta"]["type"],
+        "object"
+    );
+    assert!(input.get("$defs").is_none());
+    // Unions whose variants share a type repeat it at the top.
+    assert_eq!(input["properties"]["event"]["type"], "object");
+    assert!(input["properties"]["shape"].get("type").is_none());
+
+    // Recursive types still terminate through `$defs`.
+    let input = &tools[1].schemas().unwrap().input;
+    assert_eq!(input["properties"]["tree"]["type"], "object");
+    assert_eq!(
+        input["properties"]["tree"]["properties"]["children"]["items"]["$ref"],
+        "#/$defs/Tree"
+    );
+    assert_eq!(input["$defs"]["Tree"]["type"], "object");
 }

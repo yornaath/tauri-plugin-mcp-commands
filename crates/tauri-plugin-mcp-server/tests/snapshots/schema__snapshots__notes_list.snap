@@ -1,11 +1,12 @@
 ---
 source: crates/tauri-plugin-mcp-server/tests/schema.rs
+assertion_line: 164
 expression: "super :: schemas(stringify! (notes_list))"
 ---
 {
   "input": {
-    "$defs": {
-      "Priority": {
+    "properties": {
+      "priority": {
         "description": "How urgent a note is.",
         "enum": [
           "low",
@@ -13,7 +14,7 @@ expression: "super :: schemas(stringify! (notes_list))"
         ],
         "type": "string"
       },
-      "Shape": {
+      "shape": {
         "anyOf": [
           {
             "properties": {
@@ -50,14 +51,6 @@ expression: "super :: schemas(stringify! (notes_list))"
             "type": "string"
           }
         ]
-      }
-    },
-    "properties": {
-      "priority": {
-        "$ref": "#/$defs/Priority"
-      },
-      "shape": {
-        "$ref": "#/$defs/Shape"
       }
     },
     "required": [

@@ -1,39 +1,32 @@
 ---
 source: crates/tauri-plugin-mcp-server/tests/schema.rs
+assertion_line: 164
 expression: "super :: schemas(stringify! (filter))"
 ---
 {
   "input": {
-    "$defs": {
-      "Filters_Deserialize": {
+    "properties": {
+      "filters": {
         "description": "Serializes as a list, but also accepts a single string.",
         "properties": {
           "tags": {
-            "$ref": "#/$defs/OneOrMany"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ]
           }
         },
         "required": [
           "tags"
         ],
         "type": "object"
-      },
-      "OneOrMany": {
-        "anyOf": [
-          {
-            "type": "string"
-          },
-          {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          }
-        ]
-      }
-    },
-    "properties": {
-      "filters": {
-        "$ref": "#/$defs/Filters_Deserialize"
       }
     },
     "required": [

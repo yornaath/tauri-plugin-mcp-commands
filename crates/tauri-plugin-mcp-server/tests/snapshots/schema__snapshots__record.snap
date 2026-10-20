@@ -1,11 +1,12 @@
 ---
 source: crates/tauri-plugin-mcp-server/tests/schema.rs
+assertion_line: 181
 expression: "super :: schemas(stringify! (record))"
 ---
 {
   "input": {
-    "$defs": {
-      "Event": {
+    "properties": {
+      "event": {
         "anyOf": [
           {
             "properties": {
@@ -47,12 +48,8 @@ expression: "super :: schemas(stringify! (record))"
             ],
             "type": "object"
           }
-        ]
-      }
-    },
-    "properties": {
-      "event": {
-        "$ref": "#/$defs/Event"
+        ],
+        "type": "object"
       }
     },
     "required": [

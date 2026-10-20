@@ -13,8 +13,8 @@ use serde_json::{Map, Value, json};
 use specta::{
     Format as _, Types,
     datatype::{
-        DataType, Enum, Fields, Generic, NamedDataType, NamedReference, NamedReferenceType, Primitive,
-        Reference,
+        DataType, Enum, Fields, Generic, NamedDataType, NamedReference, NamedReferenceType,
+        Primitive, Reference,
     },
 };
 use specta_serde::{Phase, PhasesFormat, select_phase_datatype};
@@ -27,7 +27,12 @@ use crate::{
 /// Generic nesting limit for recursive generic types, which are inlined.
 const MAX_DEPTH: usize = 64;
 
-pub(crate) fn from_specta(tool: &str, sig: SpectaSig, types: &Types, inputs: &[&str]) -> Result<ToolSchemas, String> {
+pub(crate) fn from_specta(
+    tool: &str,
+    sig: SpectaSig,
+    types: &Types,
+    inputs: &[&str],
+) -> Result<ToolSchemas, String> {
     let args: Vec<DataType> = sig.inputs.into_iter().flatten().collect();
     if args.len() != inputs.len() {
         return Err(format!(
@@ -75,18 +80,27 @@ pub(crate) fn from_specta(tool: &str, sig: SpectaSig, types: &Types, inputs: &[&
         }
     };
 
-    Ok(ToolSchemas { input, output, wrap_output })
+    Ok(ToolSchemas {
+        input,
+        output,
+        wrap_output,
+    })
 }
 
 /// `Result<T, E>` is a named generic type in specta; tools report `T`.
 fn unwrap_result(dt: &DataType, types: &Types) -> Option<DataType> {
-    let DataType::Reference(Reference::Named(r)) = dt else { return None };
+    let DataType::Reference(Reference::Named(r)) = dt else {
+        return None;
+    };
     let ndt = types.get(r)?;
-    let std_result = ndt.name == "Result" && matches!(&*ndt.module_path, "std::result" | "core::result");
+    let std_result =
+        ndt.name == "Result" && matches!(&*ndt.module_path, "std::result" | "core::result");
     if !std_result {
         return None;
     }
-    let NamedReferenceType::Reference { generics, .. } = &r.inner else { return None };
+    let NamedReferenceType::Reference { generics, .. } = &r.inner else {
+        return None;
+    };
     generics.first().map(|(_, dt)| dt.clone())
 }
 
@@ -111,16 +125,29 @@ struct Cx<'t> {
     /// Named types being inlined, so recursive references inside them can
     /// become a `$ref` to a definition built from the same body.
     inlining: Vec<(Identity, DataType)>,
+    /// Inline non-recursive named types instead of `$ref`ing them (inputs).
+    inline: bool,
 }
 
 impl<'t> Cx<'t> {
     fn new(types: &'t Types, phase: Phase) -> Self {
-        Self { types, phase, defs: BTreeMap::new(), owners: BTreeMap::new(), inlining: Vec::new() }
+        let inline = phase == Phase::Deserialize;
+        Self {
+            types,
+            phase,
+            defs: BTreeMap::new(),
+            owners: BTreeMap::new(),
+            inlining: Vec::new(),
+            inline,
+        }
     }
 
     fn attach_defs(self, obj: &mut JsonObject) {
         if !self.defs.is_empty() {
-            obj.insert("$defs".into(), Value::Object(self.defs.into_iter().collect()));
+            obj.insert(
+                "$defs".into(),
+                Value::Object(self.defs.into_iter().collect()),
+            );
         }
     }
 
@@ -128,7 +155,8 @@ impl<'t> Cx<'t> {
     /// schema shows its real `type`.
     fn convert_root(&mut self, dt: &DataType) -> Value {
         if let DataType::Reference(Reference::Named(r)) = dt
-            && let (Some(ndt), NamedReferenceType::Reference { generics, .. }) = (self.types.get(r), &r.inner)
+            && let (Some(ndt), NamedReferenceType::Reference { generics, .. }) =
+                (self.types.get(r), &r.inner)
             && generics.is_empty()
         {
             return self.named_body(ndt, &[], 0);
@@ -172,7 +200,11 @@ impl<'t> Cx<'t> {
             DataType::Intersection(parts) => {
                 json!({ "allOf": parts.iter().map(|p| self.convert(p, env, depth + 1)).collect::<Vec<_>>() })
             }
-            DataType::Generic(g) => env.iter().find(|(name, _)| name == g).map(|(_, s)| s.clone()).unwrap_or(json!({})),
+            DataType::Generic(g) => env
+                .iter()
+                .find(|(name, _)| name == g)
+                .map(|(_, s)| s.clone())
+                .unwrap_or(json!({})),
             DataType::Reference(Reference::Named(r)) => self.named_ref(r, env, depth),
             // Exporter-specific types: accept anything.
             DataType::Reference(Reference::Opaque(_)) => json!({}),
@@ -180,7 +212,9 @@ impl<'t> Cx<'t> {
     }
 
     fn named_ref(&mut self, r: &NamedReference, env: Env, depth: usize) -> Value {
-        let Some(ndt) = self.types.get(r) else { return json!({}) };
+        let Some(ndt) = self.types.get(r) else {
+            return json!({});
+        };
         if is_any_json(ndt) {
             return json!({});
         }
@@ -193,14 +227,37 @@ impl<'t> Cx<'t> {
             }
             NamedReferenceType::Recursive(_) => {
                 let id = identity(ndt);
-                let body = self.inlining.iter().rev().find(|(i, _)| *i == id).map(|(_, dt)| dt.clone());
+                let body = self
+                    .inlining
+                    .iter()
+                    .rev()
+                    .find(|(i, _)| *i == id)
+                    .map(|(_, dt)| dt.clone());
                 self.def_ref(ndt, body.as_ref())
             }
-            NamedReferenceType::Reference { generics, .. } if generics.is_empty() => self.def_ref(ndt, None),
+            // Inputs inline named types, since clients often don't resolve
+            // `$ref` (Claude Code shows such parameters as `unknown`). A type
+            // already being inlined is a cycle and gets a definition.
+            NamedReferenceType::Reference { generics, .. }
+                if let Some(body) = &ndt.ty
+                    && generics.is_empty()
+                    && self.inline
+                    && !self.inlining.iter().any(|(i, _)| *i == identity(ndt)) =>
+            {
+                self.inlining.push((identity(ndt), body.clone()));
+                let s = self.named_body(ndt, &[], depth + 1);
+                self.inlining.pop();
+                s
+            }
+            NamedReferenceType::Reference { generics, .. } if generics.is_empty() => {
+                self.def_ref(ndt, None)
+            }
             // Generic types are inlined with their arguments substituted.
             NamedReferenceType::Reference { generics, .. } => {
-                let args: Vec<(Generic, Value)> =
-                    generics.iter().map(|(g, dt)| (g.clone(), self.convert(dt, env, depth + 1))).collect();
+                let args: Vec<(Generic, Value)> = generics
+                    .iter()
+                    .map(|(g, dt)| (g.clone(), self.convert(dt, env, depth + 1)))
+                    .collect();
                 self.named_body(ndt, &args, depth + 1)
             }
         }
@@ -230,7 +287,8 @@ impl<'t> Cx<'t> {
             self.defs.insert(key.clone(), json!({}));
             let schema = match body {
                 Some(dt) => {
-                    let mut s = self.convert(&select_phase_datatype(dt, self.types, self.phase), &[], 0);
+                    let mut s =
+                        self.convert(&select_phase_datatype(dt, self.types, self.phase), &[], 0);
                     describe(&mut s, &ndt.docs);
                     s
                 }
@@ -261,7 +319,8 @@ impl<'t> Cx<'t> {
                     describe(&mut schema, &field.docs);
                     // serde fills missing `Option` fields with `None` on deserialize.
                     let optional = field.optional
-                        || (self.phase == Phase::Deserialize && matches!(ty, DataType::Nullable(_)));
+                        || (self.phase == Phase::Deserialize
+                            && matches!(ty, DataType::Nullable(_)));
                     if !optional {
                         required.push(Value::String(name.to_string()));
                     }
@@ -304,18 +363,34 @@ impl<'t> Cx<'t> {
             .iter()
             .map(|v| {
                 let o = v.as_object()?;
-                (o.len() == 2 && o.get("type") == Some(&json!("string"))).then(|| o.get("const").cloned())?
+                (o.len() == 2 && o.get("type") == Some(&json!("string")))
+                    .then(|| o.get("const").cloned())?
             })
             .collect();
         match (consts, variants.len()) {
             (_, 0) => json!({ "not": {} }),
             (Some(c), n) if n > 1 => json!({ "type": "string", "enum": c }),
             (_, 1) => variants.pop().unwrap(),
-            (_, _) => json!({ "anyOf": variants }),
+            (_, _) => {
+                // A `type` shared by every variant is repeated on the union:
+                // some clients only read a parameter's top-level `type`
+                // (Claude Code's `/mcp` view shows `unknown` otherwise).
+                let ty = variants[0].get("type").filter(|t| variants.iter().all(|v| v.get("type") == Some(*t))).cloned();
+                let mut s = json!({ "anyOf": variants });
+                if let Some(ty) = ty {
+                    s["type"] = ty;
+                }
+                s
+            }
         }
     }
 
-    fn tuple<'a>(&mut self, elems: impl Iterator<Item = &'a DataType>, env: Env, depth: usize) -> Value {
+    fn tuple<'a>(
+        &mut self,
+        elems: impl Iterator<Item = &'a DataType>,
+        env: Env,
+        depth: usize,
+    ) -> Value {
         let items: Vec<_> = elems.map(|e| self.convert(e, env, depth + 1)).collect();
         if items.is_empty() {
             return json!({ "type": "null" });
@@ -359,7 +434,11 @@ fn primitive(p: &Primitive) -> Value {
         Primitive::u8 => json!({ "type": "integer", "minimum": 0, "maximum": u8::MAX }),
         Primitive::u16 => json!({ "type": "integer", "minimum": 0, "maximum": u16::MAX }),
         Primitive::u32 => json!({ "type": "integer", "minimum": 0, "maximum": u32::MAX }),
-        Primitive::u64 | Primitive::u128 | Primitive::usize => json!({ "type": "integer", "minimum": 0 }),
-        Primitive::f16 | Primitive::f32 | Primitive::f64 | Primitive::f128 => json!({ "type": "number" }),
+        Primitive::u64 | Primitive::u128 | Primitive::usize => {
+            json!({ "type": "integer", "minimum": 0 })
+        }
+        Primitive::f16 | Primitive::f32 | Primitive::f64 | Primitive::f128 => {
+            json!({ "type": "number" })
+        }
     }
 }
