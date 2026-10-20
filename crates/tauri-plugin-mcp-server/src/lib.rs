@@ -17,6 +17,8 @@ mod tool;
 mod transport;
 
 pub use tauri_plugin_mcp_server_macros::{collect_mcp_tools, mcp_tool};
+#[cfg(feature = "tauri-specta")]
+pub use commands::specta_builder;
 pub use clients::{AccessRequest, ConnectedClient, EVENT_ACCESS_REQUESTED, EVENT_CLIENT_CONNECTED};
 pub use plugin::{Builder, ConnectionConfigs, Error, McpServer, Status};
 pub use secure_fs::is_owner_only;

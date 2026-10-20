@@ -202,6 +202,15 @@ Events:
 | `mcp://client-connected` | a `ConnectedClient` |
 | `mcp://access-requested` | `{ id, client }`. Answer it with `respond_access(id, allow)`. Concurrent requests from the same client share one prompt. |
 
+### tauri-specta bindings
+
+With the `specta` feature (default), the plugin's commands carry `#[specta::specta]` and its types implement `specta::Type`. The `tauri-specta` feature adds `specta_builder()`, which you can export instead of using the `guest-js` package:
+
+```rust
+tauri_plugin_mcp_server::specta_builder()
+    .export(specta_typescript::Typescript::default(), "../src/bindings/mcp-server.ts")?;
+```
+
 ## Connecting agents
 
 `connection_configs()` renders these for you.

@@ -9,8 +9,10 @@ readme = "../../README.md"
 links = "tauri-plugin-mcp-server"
 
 [features]
-default = ["specta"]
+default = []
 specta = ["dep:specta", "dep:specta-serde", "tauri/specta"]
+# `specta_builder()`: the plugin's commands and types for tauri-specta bindings.
+tauri-specta = ["specta", "dep:tauri-specta", "tauri-specta/typescript", "dep:specta-typescript", "tauri/wry"]
 # Schema fallback for commands without specta: inputs and results implement `schemars::JsonSchema`.
 schemars = ["dep:schemars"]
 
@@ -34,6 +36,8 @@ base64.workspace = true
 http.workspace = true
 specta = { workspace = true, optional = true }
 specta-serde = { workspace = true, optional = true }
+tauri-specta = { workspace = true, optional = true }
+specta-typescript = { workspace = true, optional = true }
 schemars = { workspace = true, optional = true }
 
 [target.'cfg(windows)'.dependencies]

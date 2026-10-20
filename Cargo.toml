@@ -39,6 +39,7 @@ thiserror = "2"
 specta = { version = "=2.0.0-rc.25", features = ["derive", "function", "serde_json"] }
 specta-serde = "=0.0.12"
 tauri-specta = "=2.0.0-rc.25"
+specta-typescript = "=0.0.12"
 
 # Macro crate.
 syn = { version = "2", features = ["full", "extra-traits", "visit", "visit-mut"] }

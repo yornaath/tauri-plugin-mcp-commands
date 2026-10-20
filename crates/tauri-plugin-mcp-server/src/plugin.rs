@@ -39,6 +39,14 @@ impl Serialize for Error {
     }
 }
 
+// Serialized as its message.
+#[cfg(feature = "specta")]
+impl specta::Type for Error {
+    fn definition(types: &mut specta::Types) -> specta::datatype::DataType {
+        <String as specta::Type>::definition(types)
+    }
+}
+
 /// Configures the plugin. Nothing is exposed unless passed to [`Builder::tools`]
 /// or [`Builder::tool`], and the server only runs once started.
 pub struct Builder<R: Runtime> {
@@ -170,6 +178,7 @@ impl<R: Runtime> Builder<R> {
 
 /// Server state, as returned by [`McpServer::status`].
 #[derive(Debug, Clone, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct Status {
     pub running: bool,
@@ -182,6 +191,7 @@ pub struct Status {
 
 /// Ready-to-paste client configurations, for the host app's settings UI.
 #[derive(Debug, Clone, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct ConnectionConfigs {
     /// Server name used in the snippets.
@@ -191,15 +201,22 @@ pub struct ConnectionConfigs {
     /// `claude mcp add …` command line.
     pub claude_code: String,
     /// Entry for Cursor's `mcp.json`.
+    #[cfg_attr(feature = "tauri-specta", specta(type = JsonObject))]
     pub cursor: Value,
     /// Entry for VS Code's `.vscode/mcp.json`.
+    #[cfg_attr(feature = "tauri-specta", specta(type = JsonObject))]
     pub vscode: Value,
     /// Table for Codex's `~/.codex/config.toml`.
     pub codex: String,
     /// Entry for `claude_desktop_config.json`, via the stdio bridge. `None`
     /// unless [`Builder::bridge_path`] is set.
+    #[cfg_attr(feature = "tauri-specta", specta(type = Option<JsonObject>))]
     pub claude_desktop: Option<Value>,
 }
+
+// `serde_json::Value` is recursive, which specta can't export.
+#[cfg(feature = "tauri-specta")]
+type JsonObject = std::collections::HashMap<String, specta_typescript::Unknown>;
 
 /// Runtime control of the MCP server: `app.state::<McpServer<R>>()`.
 pub struct McpServer<R: Runtime>(Arc<Inner<R>>);

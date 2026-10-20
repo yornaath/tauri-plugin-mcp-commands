@@ -27,6 +27,7 @@ pub(crate) struct ClientIdent {
 
 /// A client that has talked to the server.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct ConnectedClient {
     /// Stable key for this client during the app's run.
@@ -35,14 +36,19 @@ pub struct ConnectedClient {
     pub version: Option<String>,
     pub user_agent: Option<String>,
     /// Unix milliseconds.
+    // Unix ms and request ids stay far below 2^53, so a JS number holds them.
+    #[cfg_attr(feature = "specta", specta(type = f64))]
     pub first_seen: u64,
+    #[cfg_attr(feature = "specta", specta(type = f64))]
     pub last_seen: u64,
 }
 
 /// Payload of `mcp://access-requested`. Answer with `McpServer::respond_access`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct AccessRequest {
+    #[cfg_attr(feature = "specta", specta(type = f64))]
     pub id: u64,
     pub client: ConnectedClient,
 }
