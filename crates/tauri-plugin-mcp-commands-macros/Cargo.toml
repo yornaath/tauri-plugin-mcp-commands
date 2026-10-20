@@ -1,0 +1,17 @@
+[package]
+name = "tauri-plugin-mcp-commands-macros"
+description = "Proc macros for tauri-plugin-mcp-commands: #[mcp_tool] and collect_mcp_tools!"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+readme = "../../README.md"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn.workspace = true
+quote.workspace = true
+proc-macro2.workspace = true
+heck.workspace = true

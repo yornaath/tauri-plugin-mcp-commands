@@ -1,8 +1,8 @@
 [workspace]
 resolver = "3"
 members = [
-    "crates/tauri-plugin-mcp-server",
-    "crates/tauri-plugin-mcp-server-macros",
+    "crates/tauri-plugin-mcp-commands",
+    "crates/tauri-plugin-mcp-commands-macros",
     "crates/mcp-stdio-bridge",
     "examples/demo-app",
 ]

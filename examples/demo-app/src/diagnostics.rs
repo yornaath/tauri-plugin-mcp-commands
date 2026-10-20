@@ -6,7 +6,7 @@ use serde::Serialize;
 use serde_json::Value;
 use specta::Type;
 use tauri::State;
-use tauri_plugin_mcp_server::mcp_tool;
+use tauri_plugin_mcp_commands::mcp_tool;
 
 pub struct MainThread(pub ThreadId);
 

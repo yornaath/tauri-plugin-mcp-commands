@@ -1,5 +1,5 @@
 /**
- * Bindings for `tauri-plugin-mcp-server`.
+ * Bindings for `tauri-plugin-mcp-commands`.
  *
  * Permissions: `mcp-server:default` allows `start`, `stop` and `status`.
  * `connectionConfigs` (which contains the bearer token), `rotateToken` and

@@ -1,5 +1,5 @@
 // Demo UI. Uses `window.__TAURI__` (withGlobalTauri) so it needs no bundler;
-// a real app would use the `tauri-plugin-mcp-server-api` package instead.
+// a real app would use the `tauri-plugin-mcp-commands-api` package instead.
 
 const { invoke } = window.__TAURI__.core
 const { listen } = window.__TAURI__.event

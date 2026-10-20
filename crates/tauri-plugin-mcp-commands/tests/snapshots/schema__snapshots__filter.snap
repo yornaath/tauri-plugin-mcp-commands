@@ -1,0 +1,53 @@
+---
+source: crates/tauri-plugin-mcp-commands/tests/schema.rs
+assertion_line: 164
+expression: "super :: schemas(stringify! (filter))"
+---
+{
+  "input": {
+    "properties": {
+      "filters": {
+        "description": "Serializes as a list, but also accepts a single string.",
+        "properties": {
+          "tags": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ]
+          }
+        },
+        "required": [
+          "tags"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "filters"
+    ],
+    "type": "object"
+  },
+  "output": {
+    "description": "Serializes as a list, but also accepts a single string.",
+    "properties": {
+      "tags": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "tags"
+    ],
+    "type": "object"
+  },
+  "wrapOutput": false
+}

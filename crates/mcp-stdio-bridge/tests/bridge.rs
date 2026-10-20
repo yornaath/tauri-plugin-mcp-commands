@@ -11,7 +11,7 @@ use std::{
 
 use serde_json::{Value, json};
 use tauri::{Manager, test::MockRuntime};
-use tauri_plugin_mcp_server::{Builder, McpServer, collect_mcp_tools, mcp_tool};
+use tauri_plugin_mcp_commands::{Builder, McpServer, collect_mcp_tools, mcp_tool};
 
 /// Greets someone.
 #[mcp_tool(read_only)]

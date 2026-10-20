@@ -1,4 +1,4 @@
-//! Demo app for tauri-plugin-mcp-server.
+//! Demo app for tauri-plugin-mcp-commands.
 //!
 //! Flags:
 //! - `--autostart`: start the MCP server on launch (otherwise use the UI)
@@ -19,7 +19,7 @@ use diagnostics::{MainThread, WebviewReports};
 use notes::NotesRepo;
 use serde_json::{Value, json};
 use tauri::{AppHandle, Emitter, Manager, RunEvent, Runtime, WebviewUrl, WebviewWindowBuilder, tray::TrayIconBuilder};
-use tauri_plugin_mcp_server::{McpServer, ToolAnnotations, ToolDef, collect_mcp_tools};
+use tauri_plugin_mcp_commands::{McpServer, ToolAnnotations, ToolDef, collect_mcp_tools};
 
 struct Flags {
     autostart: bool,
@@ -92,7 +92,7 @@ fn bridge_path() -> std::path::PathBuf {
 fn main() {
     let flags = flags();
     let tray_only = flags.tray_only;
-    let mcp = tauri_plugin_mcp_server::Builder::new()
+    let mcp = tauri_plugin_mcp_commands::Builder::new()
         .server_info("MCP Demo", env!("CARGO_PKG_VERSION"))
         .tools(collect_mcp_tools![
             notes::notes_list,

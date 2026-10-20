@@ -1,0 +1,20 @@
+error[E0277]: `Channel<u32>` can't be a parameter of an `#[mcp_tool]` command
+ --> tests/ui/channel_arg.rs:4:1
+  |
+4 | #[mcp_tool]
+  | ^^^^^^^^^^^ IPC-only parameter
+5 | #[tauri::command]
+6 | async fn stream(on_progress: Channel<u32>) -> Result<(), String> {
+  |                              ------- required by a bound introduced by this call
+  |
+  = help: the trait `tauri_plugin_mcp_commands::__private::McpToolArgNotIpcBound` is not implemented for `Channel<u32>`
+  = note: `Channel`, `Request`, `CommandScope` and `GlobalScope` come from a webview IPC call, which an MCP tool call doesn't have
+  = note: split the logic into a function both the command and a separate `#[mcp_tool]` fn can call
+note: required by a bound in `tauri_plugin_mcp_commands::__private::ExtractIpcBound::__mcp_extract`
+ --> src/dispatch.rs
+  |
+  |     fn __mcp_extract<R: Runtime>(self, cx: &Cx<'_, R>, name: &'static str) -> Result<Self::Out, ToolError>
+  |        ------------- required by a bound in this associated function
+  |     where
+  |         Self::Out: McpToolArgNotIpcBound;
+  |                    ^^^^^^^^^^^^^^^^^^^^^ required by this bound in `ExtractIpcBound::__mcp_extract`

@@ -1,6 +1,6 @@
 # mcp-stdio-bridge
 
-Bridges stdio-only MCP clients (Claude Desktop, `.mcpb` bundles) to a Tauri app using [tauri-plugin-mcp-server](../../README.md).
+Bridges stdio-only MCP clients (Claude Desktop, `.mcpb` bundles) to a Tauri app using [tauri-plugin-mcp-commands](../../README.md).
 
 ```text
 mcp-stdio-bridge --app-id com.example.notes

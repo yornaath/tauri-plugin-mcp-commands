@@ -1,5 +1,5 @@
 //! stdio ↔ streamable-HTTP bridge for Tauri apps that use
-//! `tauri-plugin-mcp-server`, for MCP clients that only speak stdio (Claude
+//! `tauri-plugin-mcp-commands`, for MCP clients that only speak stdio (Claude
 //! Desktop's local config, `.mcpb` bundles).
 //!
 //! ```text
@@ -35,7 +35,7 @@ const DISCOVERY_FILE: &str = "mcp.json";
 const DISCOVERY_VERSION: u32 = 1;
 
 #[derive(Parser, Debug)]
-#[command(version, about = "stdio <-> HTTP bridge for Tauri apps using tauri-plugin-mcp-server")]
+#[command(version, about = "stdio <-> HTTP bridge for Tauri apps using tauri-plugin-mcp-commands")]
 struct Args {
     /// The app's bundle identifier (`identifier` in tauri.conf.json). The
     /// discovery file is looked up in the app's data dir.

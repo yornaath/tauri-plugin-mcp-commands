@@ -1,9 +1,9 @@
-# tauri-plugin-mcp-server-api
+# tauri-plugin-mcp-commands-api
 
-JavaScript bindings for [tauri-plugin-mcp-server](../README.md).
+JavaScript bindings for [tauri-plugin-mcp-commands](../README.md).
 
 ```ts
-import { start, stop, status, connectionConfigs, onAccessRequested, respondAccess } from 'tauri-plugin-mcp-server-api'
+import { start, stop, status, connectionConfigs, onAccessRequested, respondAccess } from 'tauri-plugin-mcp-commands-api'
 
 await start()
 const { url, claudeCode } = (await connectionConfigs())!

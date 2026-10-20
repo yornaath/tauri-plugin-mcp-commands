@@ -1,6 +1,6 @@
 [package]
 name = "mcp-stdio-bridge"
-description = "stdio <-> HTTP bridge for Tauri apps using tauri-plugin-mcp-server, for stdio-only MCP clients such as Claude Desktop"
+description = "stdio <-> HTTP bridge for Tauri apps using tauri-plugin-mcp-commands, for stdio-only MCP clients such as Claude Desktop"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -21,6 +21,6 @@ dirs.workspace = true
 clap.workspace = true
 
 [dev-dependencies]
-tauri-plugin-mcp-server = { path = "../tauri-plugin-mcp-server" }
+tauri-plugin-mcp-commands = { path = "../tauri-plugin-mcp-commands" }
 tauri = { workspace = true, features = ["test"] }
 specta.workspace = true

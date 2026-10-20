@@ -774,7 +774,7 @@ dependencies = [
  "specta",
  "tauri",
  "tauri-build",
- "tauri-plugin-mcp-server",
+ "tauri-plugin-mcp-commands",
  "tokio",
 ]
 
@@ -2162,7 +2162,7 @@ dependencies = [
  "serde_json",
  "specta",
  "tauri",
- "tauri-plugin-mcp-server",
+ "tauri-plugin-mcp-commands",
  "tokio",
 ]
 
@@ -3898,7 +3898,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-plugin-mcp-server"
+name = "tauri-plugin-mcp-commands"
 version = "0.1.0"
 dependencies = [
  "axum",
@@ -3918,7 +3918,7 @@ dependencies = [
  "specta-typescript",
  "tauri",
  "tauri-plugin",
- "tauri-plugin-mcp-server-macros",
+ "tauri-plugin-mcp-commands-macros",
  "tauri-specta",
  "thiserror 2.0.21",
  "tokio",
@@ -3928,7 +3928,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-plugin-mcp-server-macros"
+name = "tauri-plugin-mcp-commands-macros"
 version = "0.1.0"
 dependencies = [
  "heck 0.5.0",

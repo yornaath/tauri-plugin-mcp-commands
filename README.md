@@ -1,4 +1,4 @@
-# tauri-plugin-mcp-server
+# tauri-plugin-mcp-commands
 
 Turn a Tauri 2 app into an **MCP server**, so your users can connect their own AI agents (Claude Code, Claude Desktop, Cursor, VS Code, Codex…) to the running app. Agents call the commands you choose as MCP tools.
 
@@ -40,12 +40,12 @@ becomes this tool:
 ```toml
 # src-tauri/Cargo.toml
 [dependencies]
-tauri-plugin-mcp-server = "0.1"
+tauri-plugin-mcp-commands = "0.1"
 specta = { version = "=2.0.0-rc.25", features = ["derive", "function"] }
 ```
 
 ```rust
-use tauri_plugin_mcp_server::{collect_mcp_tools, mcp_tool};
+use tauri_plugin_mcp_commands::{collect_mcp_tools, mcp_tool};
 
 /// Creates a note and returns it.
 #[mcp_tool(idempotent = false)]
@@ -62,7 +62,7 @@ async fn notes_delete(repo: State<'_, NotesRepo>, id: u32) -> Result<(), String>
 fn main() {
     tauri::Builder::default()
         .plugin(
-            tauri_plugin_mcp_server::Builder::new()
+            tauri_plugin_mcp_commands::Builder::new()
                 .tools(collect_mcp_tools![notes_list, notes_create, notes_delete])
                 .preferred_port(43110)
                 .build(),
@@ -77,15 +77,15 @@ fn main() {
 The server is **off by default**. Start it when the user opts in, from Rust:
 
 ```rust
-let server = app.state::<tauri_plugin_mcp_server::McpServer<tauri::Wry>>();
+let server = app.state::<tauri_plugin_mcp_commands::McpServer<tauri::Wry>>();
 server.start().await?;
 let configs = server.connection_configs().unwrap(); // ready-to-paste client configs
 ```
 
-or from the webview, with the [`tauri-plugin-mcp-server-api`](guest-js) package:
+or from the webview, with the [`tauri-plugin-mcp-commands-api`](guest-js) package:
 
 ```ts
-import { start, connectionConfigs } from 'tauri-plugin-mcp-server-api'
+import { start, connectionConfigs } from 'tauri-plugin-mcp-commands-api'
 await start()
 const { claudeCode } = (await connectionConfigs())!
 ```
@@ -154,7 +154,7 @@ Schemas are JSON Schema 2020-12. With specta they follow your serde attributes: 
 For tools that aren't a command:
 
 ```rust
-use tauri_plugin_mcp_server::ToolDef;
+use tauri_plugin_mcp_commands::ToolDef;
 
 let timer = ToolDef::manual(
     "start_timer",
@@ -207,7 +207,7 @@ Events:
 With the `specta` feature (default), the plugin's commands carry `#[specta::specta]` and its types implement `specta::Type`. The `tauri-specta` feature adds `specta_builder()`, which you can export instead of using the `guest-js` package:
 
 ```rust
-tauri_plugin_mcp_server::specta_builder()
+tauri_plugin_mcp_commands::specta_builder()
     .export(specta_typescript::Typescript::default(), "../src/bindings/mcp-server.ts")?;
 ```
 
@@ -267,7 +267,7 @@ Client names used for approval are self-reported, so the approval prompt is a UX
 
 ## Testing your tools
 
-`ToolDef::call` runs a tool directly, and the plugin works on `tauri::test`'s mock runtime. See [crates/tauri-plugin-mcp-server/tests](crates/tauri-plugin-mcp-server/tests).
+`ToolDef::call` runs a tool directly, and the plugin works on `tauri::test`'s mock runtime. See [crates/tauri-plugin-mcp-commands/tests](crates/tauri-plugin-mcp-commands/tests).
 
 On Windows, test binaries crash with `STATUS_ENTRYPOINT_NOT_FOUND` (`0xc0000139`) when Tauri's default `common-controls-v6` feature is enabled. That feature needs an app manifest, which test binaries don't get. Disable it, or use a separate crate for tests (see [examples/demo-app/Cargo.toml](examples/demo-app/Cargo.toml)).
 
@@ -296,8 +296,8 @@ Desktop only (Windows, macOS, Linux). Main-thread dispatch has been verified on 
 ## Repository layout
 
 ```
-crates/tauri-plugin-mcp-server/         registry, MCP server, HTTP transport, auth, discovery, plugin
-crates/tauri-plugin-mcp-server-macros/  #[mcp_tool], collect_mcp_tools!
+crates/tauri-plugin-mcp-commands/         registry, MCP server, HTTP transport, auth, discovery, plugin
+crates/tauri-plugin-mcp-commands-macros/  #[mcp_tool], collect_mcp_tools!
 crates/mcp-stdio-bridge/                stdio <-> HTTP bridge binary
 guest-js/                               JS bindings
 examples/demo-app/                      example app (cargo run -p demo-app)
