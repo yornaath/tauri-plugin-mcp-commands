@@ -9,7 +9,7 @@ readme = "../../README.md"
 links = "tauri-plugin-mcp-server"
 
 [features]
-default = []
+default = ["specta"]
 specta = ["dep:specta", "dep:specta-serde", "tauri/specta"]
 # `specta_builder()`: the plugin's commands and types for tauri-specta bindings.
 tauri-specta = ["specta", "dep:tauri-specta", "tauri-specta/typescript", "dep:specta-typescript", "tauri/wry"]
