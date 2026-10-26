@@ -3,6 +3,7 @@
 mod auth;
 mod clients;
 mod commands;
+mod content;
 pub mod discovery;
 mod dispatch;
 mod plugin;
@@ -16,6 +17,7 @@ mod server;
 mod tool;
 mod transport;
 
+pub use content::{ContentPart, ToolContent};
 pub use clients::{AccessRequest, ConnectedClient, EVENT_ACCESS_REQUESTED, EVENT_CLIENT_CONNECTED};
 #[cfg(feature = "tauri-specta")]
 pub use commands::specta_builder;

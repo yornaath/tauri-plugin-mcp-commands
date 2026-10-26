@@ -292,3 +292,20 @@ fn struct_inputs_are_inlined() {
     );
     assert_eq!(input["$defs"]["Tree"]["type"], "object");
 }
+
+#[mcp_tool]
+#[tauri::command]
+#[specta::specta]
+async fn snapshot_image(frames: u32) -> Result<tauri_plugin_mcp_commands::ToolContent, String> {
+    Ok(tauri_plugin_mcp_commands::ToolContent::new().text(format!("{frames} frames")))
+}
+
+/// Content results are sent as content blocks, so they declare no output schema.
+#[test]
+fn tool_content_has_no_output_schema() {
+    let tools: Vec<ToolDef<MockRuntime>> = collect_mcp_tools![snapshot_image];
+    let schemas = tools[0].schemas().unwrap();
+    assert_eq!(schemas.output, None);
+    assert!(!schemas.wrap_output);
+    assert!(schemas.input["properties"].get("frames").is_some());
+}

@@ -129,14 +129,35 @@ fn to_mcp_tool<R: Runtime>(tool: &ToolDef<R>) -> Result<Tool, String> {
 
 fn to_call_result(value: Result<Value, ToolError>, wrap: Option<bool>) -> CallToolResult {
     match value {
-        Ok(value) => match wrap {
+        Ok(value) => match (wrap, crate::content::blocks_of(&value)) {
+            // A `ToolContent` result: its blocks, as they are.
+            (None, Some(blocks)) => CallToolResult::success(content_blocks(blocks)),
             // `()` return: no structured content.
-            None => CallToolResult::success(vec![ContentBlock::text(value.to_string())]),
-            Some(true) => CallToolResult::structured(json!({ "result": value })),
-            Some(false) => CallToolResult::structured(value),
+            (None, None) => CallToolResult::success(vec![ContentBlock::text(value.to_string())]),
+            (Some(true), _) => CallToolResult::structured(json!({ "result": value })),
+            (Some(false), _) => CallToolResult::structured(value),
         },
         Err(err) => CallToolResult::error(vec![ContentBlock::text(err.to_string())]),
     }
+}
+
+/// Content blocks from a serialized `ToolContent`. Anything unexpected is
+/// passed on as text rather than dropped.
+fn content_blocks(blocks: &[Value]) -> Vec<ContentBlock> {
+    blocks
+        .iter()
+        .map(|block| {
+            let field = |name: &str| block.get(name).and_then(Value::as_str);
+            match field("type") {
+                Some("text") => ContentBlock::text(field("text").unwrap_or_default()),
+                Some("image") => match (field("data"), field("mimeType")) {
+                    (Some(data), Some(mime_type)) => ContentBlock::image(data, mime_type),
+                    _ => ContentBlock::text(block.to_string()),
+                },
+                _ => ContentBlock::text(block.to_string()),
+            }
+        })
+        .collect()
 }
 
 impl<R: Runtime> ServerHandler for McpHandler<R> {
@@ -193,5 +214,37 @@ impl<R: Runtime> ServerHandler for McpHandler<R> {
             log::debug!("MCP tool `{}` failed: {e}", tool.name());
         }
         Ok(to_call_result(result, wrap).into())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ToolContent;
+
+    #[test]
+    fn tool_content_becomes_content_blocks() {
+        let value = serde_json::to_value(ToolContent::new().text("two frames").image_png(&[137, 80])).unwrap();
+        let result = to_call_result(Ok(value), None);
+
+        assert_eq!(result.structured_content, None);
+        assert_eq!(result.is_error, Some(false));
+        let blocks = serde_json::to_value(&result.content).unwrap();
+        assert_eq!(
+            blocks,
+            json!([
+                { "type": "text", "text": "two frames" },
+                { "type": "image", "data": "iVA=", "mimeType": "image/png" },
+            ])
+        );
+    }
+
+    #[test]
+    fn malformed_blocks_fall_back_to_text() {
+        let value = json!({ "__mcp_tool_content": [{ "type": "image" }, { "type": "audio" }] });
+        let result = to_call_result(Ok(value), None);
+        let blocks = serde_json::to_value(&result.content).unwrap();
+        assert_eq!(blocks[0]["type"], "text");
+        assert_eq!(blocks[1]["type"], "text");
     }
 }

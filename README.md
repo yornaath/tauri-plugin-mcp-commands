@@ -136,6 +136,7 @@ Results map to MCP like this:
 - `Err(e)` becomes a result with `isError: true` whose text is `e`, serialized the way the webview would receive it.
 - A `Result<T, E>` output schema describes `T`.
 - MCP requires object outputs, so other results (numbers, lists…) are wrapped as `{ "result": … }`.
+- `ToolContent` (or `Result<ToolContent, E>`) becomes plain `content` blocks with no output schema. Use it for results an agent should see rather than parse, such as images: `ToolContent::new().text("3 frames").image_png(&png)`. It's a regular `Serialize + specta::Type` value, so the command still works over IPC.
 
 Collect tools with `collect_mcp_tools![a, module::b]`. Generic commands need no turbofish.
 

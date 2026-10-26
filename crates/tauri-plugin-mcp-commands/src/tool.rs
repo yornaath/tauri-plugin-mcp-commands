@@ -137,7 +137,8 @@ impl<R: Runtime> ToolDef<R> {
                 }
                 #[cfg(feature = "schemars")]
                 SchemaSource::Schemars(f) => crate::schemars_schema::build(f, &self.name, &self.inputs),
-            })
+            }
+            .map(without_content_output))
             .as_ref()
             .map_err(String::as_str)
     }
@@ -295,4 +296,14 @@ where
             .await
             .map_err(|e| ToolError::Internal(format!("command panicked: {e}")))?
     })
+}
+
+/// [`crate::ToolContent`] results are sent as content blocks, which MCP pairs
+/// with no output schema.
+fn without_content_output(mut schemas: ToolSchemas) -> ToolSchemas {
+    if schemas.output.as_ref().is_some_and(crate::content::is_content_schema) {
+        schemas.output = None;
+        schemas.wrap_output = false;
+    }
+    schemas
 }
