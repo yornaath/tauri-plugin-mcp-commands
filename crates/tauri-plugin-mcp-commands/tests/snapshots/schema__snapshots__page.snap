@@ -7,7 +7,6 @@ expression: "super :: schemas(stringify! (page))"
     "properties": {
       "counts": {
         "additionalProperties": {
-          "maximum": 4294967295,
           "minimum": 0,
           "type": "integer"
         },
@@ -48,7 +47,6 @@ expression: "super :: schemas(stringify! (page))"
         "type": "array"
       },
       "total": {
-        "maximum": 4294967295,
         "minimum": 0,
         "type": "integer"
       }

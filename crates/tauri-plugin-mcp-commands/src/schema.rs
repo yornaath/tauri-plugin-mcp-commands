@@ -429,12 +429,14 @@ fn primitive(p: &Primitive) -> Value {
         Primitive::char => json!({ "type": "string", "minLength": 1, "maxLength": 1 }),
         Primitive::i8 => json!({ "type": "integer", "minimum": i8::MIN, "maximum": i8::MAX }),
         Primitive::i16 => json!({ "type": "integer", "minimum": i16::MIN, "maximum": i16::MAX }),
-        Primitive::i32 => json!({ "type": "integer", "minimum": i32::MIN, "maximum": i32::MAX }),
-        Primitive::i64 | Primitive::i128 | Primitive::isize => json!({ "type": "integer" }),
+        // i32 and u32 bounds are wider than any value a client means to send
+        // and cost every model that reads the schema tokens, so they're left out.
+        Primitive::i32 | Primitive::i64 | Primitive::i128 | Primitive::isize => {
+            json!({ "type": "integer" })
+        }
         Primitive::u8 => json!({ "type": "integer", "minimum": 0, "maximum": u8::MAX }),
         Primitive::u16 => json!({ "type": "integer", "minimum": 0, "maximum": u16::MAX }),
-        Primitive::u32 => json!({ "type": "integer", "minimum": 0, "maximum": u32::MAX }),
-        Primitive::u64 | Primitive::u128 | Primitive::usize => {
+        Primitive::u32 | Primitive::u64 | Primitive::u128 | Primitive::usize => {
             json!({ "type": "integer", "minimum": 0 })
         }
         Primitive::f16 | Primitive::f32 | Primitive::f64 | Primitive::f128 => {

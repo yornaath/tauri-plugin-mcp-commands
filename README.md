@@ -27,7 +27,7 @@ becomes this tool:
     "type": "object",
     "properties": {
       "tag": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
-      "limit": { "anyOf": [{ "type": "integer", "minimum": 0, "maximum": 4294967295 }, { "type": "null" }] }
+      "limit": { "anyOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }] }
     }
   },
   "outputSchema": { "type": "object", "properties": { "result": { "type": "array", "items": { "$ref": "#/$defs/Note" } } }, "required": ["result"], "$defs": { "Note": { … } } },
@@ -107,7 +107,7 @@ Put it **above** `#[tauri::command]` and `#[specta::specta]`. It needs to read t
 | Argument | Effect |
 |---|---|
 | `read_only`, `destructive`, `idempotent`, `open_world` | MCP tool annotations (each optionally `= false`). |
-| `title = "…"` | Human-readable title. |
+| `title = "…"` | Short display name for client UIs. Models don't see it; put what the model needs in the doc comment. |
 | `name = "…"` | Tool name. The default is the command name (or its `rename`). |
 | `blocking` | Run a sync command on the blocking thread pool instead of the main thread. |
 | `rename_all = "snake_case"` | Argument casing. Only needed if the attribute can't go above `#[tauri::command]`. |

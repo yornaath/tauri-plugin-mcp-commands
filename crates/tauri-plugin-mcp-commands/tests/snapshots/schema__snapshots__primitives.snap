@@ -20,7 +20,6 @@ expression: "super :: schemas(stringify! (primitives))"
         "type": "string"
       },
       "pageSize": {
-        "maximum": 4294967295,
         "minimum": 0,
         "type": "integer"
       },
@@ -47,7 +46,6 @@ expression: "super :: schemas(stringify! (primitives))"
   "output": {
     "properties": {
       "result": {
-        "maximum": 4294967295,
         "minimum": 0,
         "type": "integer"
       }

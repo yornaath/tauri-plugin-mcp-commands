@@ -1,6 +1,5 @@
 ---
 source: crates/tauri-plugin-mcp-commands/tests/schema.rs
-assertion_line: 164
 expression: "super :: schemas(stringify! (notes_list))"
 ---
 {
@@ -89,7 +88,6 @@ expression: "super :: schemas(stringify! (notes_list))"
           },
           "noteId": {
             "description": "Stable identifier.",
-            "maximum": 4294967295,
             "minimum": 0,
             "type": "integer"
           },

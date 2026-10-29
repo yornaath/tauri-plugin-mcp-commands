@@ -1,6 +1,5 @@
 ---
 source: crates/tauri-plugin-mcp-commands/tests/schema.rs
-assertion_line: 181
 expression: "super :: schemas(stringify! (record))"
 ---
 {
@@ -11,7 +10,6 @@ expression: "super :: schemas(stringify! (record))"
           {
             "properties": {
               "id": {
-                "maximum": 4294967295,
                 "minimum": 0,
                 "type": "integer"
               },
@@ -32,7 +30,6 @@ expression: "super :: schemas(stringify! (record))"
                 "type": "boolean"
               },
               "id": {
-                "maximum": 4294967295,
                 "minimum": 0,
                 "type": "integer"
               },

@@ -6,7 +6,6 @@ expression: "super :: schemas(stringify! (note_get))"
   "input": {
     "properties": {
       "id": {
-        "maximum": 4294967295,
         "minimum": 0,
         "type": "integer"
       }
@@ -46,7 +45,6 @@ expression: "super :: schemas(stringify! (note_get))"
       },
       "noteId": {
         "description": "Stable identifier.",
-        "maximum": 4294967295,
         "minimum": 0,
         "type": "integer"
       },
